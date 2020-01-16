@@ -1,0 +1,53 @@
+---
+title: "Ocean Example for Stochastic Simulators: overview with opportunities"
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+
+## List of R scripts
+
+  - **SimulatorAndFunctions.R** source this file for loading settings for running the simulator in 2D and 4D (i.e. with or without the calibration parameters).
+  - **testdesign.R** generates test data to check the accuracy of the emulator and of calibration.
+  - **LHDcalibration.R** function for generating design of numerical experiments for simulator with input variables restricted to be in the set of field input variables.
+  - **DOEcalibration** for generating the "field data" used in calibration and the design of numerical experiments.
+  - **FunctionCalibration.R** specific functions used in the calibration of the ocean simulator.
+  
+  
+## List of data
+
+  - **gridu.txt**, **gridv.txt** and **oxygengrid.txt** are necessary settings to run the simulator (they are loaded when sourcing **SimulatorAndFunctions.R**). 
+  - **testdata2D.csv** 500 averaged outputs of the ocean simulator over enough replications to guarantee a small standard error (long and lat give the location, m is the averaged mean, sd is the standard error of the mean, num is the number of replications used to compute the mean). This dataset is generated with diffusion coefficient set to 700 and 200 and is used to test the accuracy of the emulator with known or unknown calibration parameters.
+  - **EmulationRep.csv** consists in results in mean square errors (MSE), score for mean prediction, score for a run prediction issued by the three emulators (homGP, hetGP, seqhetGP). The whole process from DOE generation to emulator fitting is repeated over 100 replications.
+  - **FieldData.csv** are simulated "field data" with calibration parameters set to 700 and 200.
+  - **staticDOEcalibration.csv** is the static design of numerical experiments used for homGP and hetGP for calibration purpose (4 inputs are considered longitude, latitude and the two calibrations paremeters). This design is obtained as 500 unique locations with 10 replications each.
+  - **seqDOEcalibration.csv** is the seq design of numerical experiments used for seqhetGP for calibration purpose. It has the same unique location as the static design with only 4 replications first, the remaining runs (up to a total of 5000 runs to the simulators) are chosen sequentially.
+  - **EmulatorCalib4D.Rdata**  contains the fit fo the emulators for calibration.
+  
+  
+  
+  
+  
+  
+## List of results visualization
+
+
+  - **OceanExampleEmulation2D.Rmd** runs the emulators building and display plot of predicted mean and variance. It also display prediction performance including boxplots for the 100 replications.
+  - **OceanCalibration.Rmd** runs the KOH calibration. Posterior distribution of the parameters are plotted and the prediction performance are compared before and after calibration, and also with L2 calibration, bad and good guesses of the calibration parameters.
+
+
+
+
+
+
+for any questions related to these scripts, please contact **pierre.barbillon@agroparistech.fr**

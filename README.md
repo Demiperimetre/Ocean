@@ -1,2 +1,4 @@
-# Ocean
-Ocean Simulator Example for Stochastic Simulators: overview with opportunities
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+## List of R scripts
