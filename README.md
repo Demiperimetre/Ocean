@@ -55,6 +55,8 @@ Ocean Example for Stochastic Simulators: overview with opportunities
   - **OceanExampleEmulation2D.Rmd** runs the emulators building and
     display plot of predicted mean and variance. It also display
     prediction performance including boxplots for the 100 replications.
+    [See the knitted
+    version.](https://github.com/Demiperimetre/Ocean/blob/master/OceanExampleEmulation2D.md)
   - **OceanCalibration.Rmd** runs the KOH calibration. Posterior
     distribution of the parameters are plotted and the prediction
     performance are compared before and after calibration, and also with
