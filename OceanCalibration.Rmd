@@ -1,7 +1,7 @@
 ---
-title: "Calibration of the Ocean Model"
+title: "Calibration of the Ocean Simulator"
 author: "Pierre Barbillon"
-date: "January 16, 2020"
+date: "January 17, 2020"
 output: github_document
 ---
 
@@ -102,9 +102,9 @@ seqhet <- mleHetGP(Xseq, YseqN, lower=lower, upper=upper, covtype=covtype, noise
 
 Settings for MCMC
 ```{r MCMCsettings}
-nMCMC = 1e6  #2e4
-nburnin =  2e4 #1000
-Vrw2 <- diag(c(2e-3, 2e-3, 5e-5,3e-5,1e-5,1e-5)) # variance of Random Walk
+nMCMC = 1e6  
+nburnin =  2e4 
+Vrw2 <- diag(c(2e-3, 2e-3, 5e-5,3e-5,1e-5,1e-5))/4 # variance of Random Walk
 Uprior =c(.5,.5)
 Thin = 100
 ```
@@ -114,7 +114,7 @@ Calibration with homGP
 homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps)
 calHom2 <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom, Sigdisc=NULL
                        ,logfun=TRUE, theta.init=c(0.5,0.5,1,homMLEdisc$sigb,homMLEdisc$psi), 
-                       burnin=nburnin, mcmc=nMCMC,V=Vrw2/2,thin=Thin)
+                       burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
 dfcalhom = as.data.frame(calHom2)
 names(dfcalhom) = c("u1","u2","s2f","s2b")
 dfcalhom[,1:2] = dfcalhom[,1:2] * 900 +100
@@ -189,7 +189,6 @@ We run prediction from a uniform prior on the calibration parameter and predicti
 
 Note that the seed is not fixed anymore since we use the parallel computations.
 ```{r runningcalibrationhom}
-library(parallel)
 npred = nMCMC/Thin
 ZpredhomGPnoncal = mclapply(1:npred,prednoncal,GP=hom,vareps=vareps,loc=testdesign,mc.cores = 8)
 ZpredhomGPcal = mclapply(1:npred,predcal,GP=hom,cal=calHom2,vareps=vareps,loc=testdesign,mc.cores = 8)
@@ -219,20 +218,18 @@ ZpredseqhetGPcal = Reduce(rbind,ZpredseqhetGPcal)
 ```{r plotspredic}
 library(reshape2)
 nlocplot=10
-head(ZpredhomGPcal)
 for (k in 1:nlocplot){
   dfpredhom = data.frame(cal=ZpredhomGPcal[,k],noncal = ZpredhomGPnoncal[,k] )
   df2predhom = melt(dfpredhom)
-  ghom = ggplot(df2predhom,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("homGP") 
+  ghom = ggplot(df2predhom,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("homGP")
   dfpredhet = data.frame(cal=ZpredhetGPcal[,k],noncal = ZpredhetGPnoncal[,k] )
   df2predhet = melt(dfpredhet)
-  ghet = ggplot(df2predhet,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("hetGP") 
+  ghet = ggplot(df2predhet,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("hetGP")
   dfpredseqhet = data.frame(cal=ZpredseqhetGPcal[,k],noncal = ZpredseqhetGPnoncal[,k] )
   df2predsehet = melt(dfpredseqhet)
-  ghetseq = ggplot(df2predsehet,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("seqhetGP") 
+  ghetseq = ggplot(df2predsehet,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("seqhetGP")
   print(grid.arrange(ghom,ghet,ghetseq))
 }
-
 ```
 
 
