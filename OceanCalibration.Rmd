@@ -21,6 +21,7 @@ library(MCMCpack)
 library(lhs)
 library(mvtnorm)
 library(parallel)
+library(reshape2)
 ```
 
 
@@ -43,7 +44,6 @@ set.seed(seed)
 
 ```{r field}
 Field = read.table("FieldData.csv",sep=" ")
-head(Field)
 Xfield = as.matrix(Field[,1:4])
 Yfieldnoise = Field[,5]
 n = nrow(Xfield)
@@ -56,7 +56,7 @@ vareps = 2^2
 ## Emulators
 
 Either
-```{r emulator load,eval=FALSE}
+```{r emulator load}
 #load("EmulatorCalib4D.Rdata")
 ```
 
@@ -104,7 +104,7 @@ Settings for MCMC
 ```{r MCMCsettings}
 nMCMC = 1e6  
 nburnin =  2e4 
-Vrw2 <- diag(c(2e-3, 2e-3, 5e-5,3e-5,1e-5,1e-5))/4 # variance of Random Walk
+Vrw2 <- diag(c(2e-3, 2e-3, 5e-5,3e-5,1e-5,1e-5))/40 # variance of Random Walk
 Uprior =c(.5,.5)
 Thin = 100
 ```
@@ -112,10 +112,15 @@ Thin = 100
 Calibration with homGP
 ```{r homGPcalib}
 homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps)
-calHom2 <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom, Sigdisc=NULL
-                       ,logfun=TRUE, theta.init=c(0.5,0.5,1,homMLEdisc$sigb,homMLEdisc$psi), 
-                       burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
-dfcalhom = as.data.frame(calHom2)
+# Run MH algo for calibration is time consuming
+#calHom <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom, Sigdisc=NULL
+#                       ,logfun=TRUE, theta.init=c(0.5,0.5,1,homMLEdisc$sigb,homMLEdisc$psi), 
+#                       burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
+#write.table(calHom,file="calHom.csv")
+# reloading saved calibration results
+calHom = read.table("calHom.csv",h=T,sep=" ")
+calHom = as.matrix(calHom)
+dfcalhom = as.data.frame(calHom)
 names(dfcalhom) = c("u1","u2","s2f","s2b")
 dfcalhom[,1:2] = dfcalhom[,1:2] * 900 +100
 dfcalhom[,3] = dfcalhom[,3] * Yv
@@ -131,12 +136,15 @@ hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) 
 Calibration with hetGP
 ```{r hetGPcalib}
 hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps)
-calhet2 <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het, Sigdisc=NULL
-                        ,logfun=TRUE, theta.init=c(0.5,0.5,1,hetMLEdisc$sigb,hetMLEdisc$psi), 
-                        burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
-
-
-dfcalhet = as.data.frame(calhet2)
+# Run MH algo for calibration is time consuming
+# calHet <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het, Sigdisc=NULL
+#                         ,logfun=TRUE, theta.init=c(0.5,0.5,1,hetMLEdisc$sigb,hetMLEdisc$psi), 
+#                         burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
+#write.table(calHet,file="calHet.csv")
+# reloading saved calibration results
+calHet = read.table("calHet.csv",h=T,sep=" ")
+calHet = as.matrix(calHet)
+dfcalhet = as.data.frame(calHet)
 names(dfcalhet) = c("u1","u2","s2f","s2b")
 dfcalhet[,1:2] = dfcalhet[,1:2] * 900 +100
 dfcalhet[,3] = dfcalhet[,3] * Yv
@@ -152,10 +160,15 @@ Calibration with seqhetGP
 
 ```{r seqhetGP}
 seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps)
-calseqhet2 <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet, Sigdisc=NULL
-                        ,logfun=TRUE, theta.init=c(0.5,0.5,1,seqhetMLEdisc$sigb,seqhetMLEdisc$psi), 
-                        burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
-dfcalseqhet = as.data.frame(calseqhet2)
+# Run MH algo for calibration is time consuming
+# calSeqHet <- MCMCmetrop1R(likcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet, Sigdisc=NULL
+#                         ,logfun=TRUE, theta.init=c(0.5,0.5,1,seqhetMLEdisc$sigb,seqhetMLEdisc$psi), 
+#                         burnin=nburnin, mcmc=nMCMC,V=Vrw2,thin=Thin)
+#write.table(calSeqHet,file="calSeqHet.csv")
+# reloading saved calibration results
+calSeqHet = read.table("calSeqHet.csv",h=T,sep=" ")
+calSeqHet = as.matrix(calSeqHet)
+dfcalseqhet = as.data.frame(calSeqHet)
 names(dfcalseqhet) = c("u1","u2","s2f","s2b")
 dfcalseqhet[,1:2] = dfcalseqhet[,1:2] * 900 +100
 dfcalseqhet[,3] = dfcalseqhet[,3] * Yv
@@ -190,24 +203,27 @@ We run prediction from a uniform prior on the calibration parameter and predicti
 Note that the seed is not fixed anymore since we use the parallel computations.
 ```{r runningcalibrationhom}
 npred = nMCMC/Thin
-ZpredhomGPnoncal = mclapply(1:npred,prednoncal,GP=hom,vareps=vareps,loc=testdesign,mc.cores = 8)
-ZpredhomGPcal = mclapply(1:npred,predcal,GP=hom,cal=calHom2,vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredhomGPnoncal = mclapply(1:npred,prednoncal,GP=hom,vareps=vareps,loc=testdesign,Ym=Ym,Yv=Yv,mc.cores = 8)
+ZpredhomGPcal = mclapply(1:npred,predcal,GP=hom,cal=calHom,vareps=vareps,
+                         loc=testdesign,YfN=YfieldnoiseN,Xfield=Xfield,Ym=Ym,Yv=Yv,mc.cores = 8)
 ZpredhomGPnoncal = Reduce(rbind,ZpredhomGPnoncal)
 ZpredhomGPcal = Reduce(rbind,ZpredhomGPcal)
 ```
 
 
 ```{r runningcalibhet}
-ZpredhetGPnoncal = mclapply(1:npred,prednoncal,GP=het,vareps=vareps,loc=testdesign,mc.cores = 8)
-ZpredhetGPcal = mclapply(1:npred,predcal,GP=het,cal=calhet2,vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredhetGPnoncal = mclapply(1:npred,prednoncal,GP=het,vareps=vareps,loc=testdesign,Ym=Ym,Yv=Yv,mc.cores = 8)
+ZpredhetGPcal = mclapply(1:npred,predcal,GP=het,cal=calHet,
+                         vareps=vareps,loc=testdesign,YfN=YfieldnoiseN,Xfield=Xfield,Ym=Ym,Yv=Yv,mc.cores = 8)
 ZpredhetGPnoncal = Reduce(rbind,ZpredhetGPnoncal)
 ZpredhetGPcal = Reduce(rbind,ZpredhetGPcal)
 ```
 
 
 ```{r runningcalibseqhet}
-ZpredseqhetGPnoncal = mclapply(1:npred,prednoncal,GP=seqhet,vareps=vareps,loc=testdesign,mc.cores = 8)
-ZpredseqhetGPcal = mclapply(1:npred,predcal,GP=seqhet,cal=calseqhet2,vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredseqhetGPnoncal = mclapply(1:npred,prednoncal,GP=seqhet,vareps=vareps,loc=testdesign,Ym=Ym,Yv=Yv,mc.cores = 8)
+ZpredseqhetGPcal = mclapply(1:npred,predcal,GP=seqhet,cal=calSeqHet,
+                            vareps=vareps,loc=testdesign,YfN=YfieldnoiseN,Xfield=Xfield,Ym=Ym,Yv=Yv,mc.cores = 8)
 ZpredseqhetGPnoncal = Reduce(rbind,ZpredseqhetGPnoncal)
 ZpredseqhetGPcal = Reduce(rbind,ZpredseqhetGPcal)
 ```
@@ -216,10 +232,9 @@ ZpredseqhetGPcal = Reduce(rbind,ZpredseqhetGPcal)
 ### Some plots
 
 ```{r plotspredic}
-library(reshape2)
 nlocplot=10
 for (k in 1:nlocplot){
-  dfpredhom = data.frame(cal=ZpredhomGPcal[,k],noncal = ZpredhomGPnoncal[,k] )
+    dfpredhom = data.frame(cal=ZpredhomGPcal[,k],noncal = ZpredhomGPnoncal[,k] )
   df2predhom = melt(dfpredhom)
   ghom = ggplot(df2predhom,aes(x=value, fill=variable)) + geom_density(alpha=0.25)+ theme_bw()  + geom_vline(aes(xintercept=Ztest.mean[k]),color="red")+ggtitle("homGP")
   dfpredhet = data.frame(cal=ZpredhetGPcal[,k],noncal = ZpredhetGPnoncal[,k] )
@@ -290,17 +305,22 @@ SumOfSquares((c(700,200)-100)/900,seqhet,Xfield[,1:2],YfieldnoiseN)
 ```
 
 
+We propose a "good guess" and a "bad guess". 
+
+```{r goodbadguesses}
+goodguess = c(750, 185)
+badguess = c(500,300)
+```
 
 
 
 Prediction for homGP
 ```{r predhomfixed}
-library(parallel)
-ZpredhomGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=hom,u=L2minhom$par,mc.cores = 8)
+ZpredhomGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=hom,u=L2minhom$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhomGPnoncalL2 = Reduce(rbind,ZpredhomGPnoncalL2)
-ZpredhomGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=c(750, 185),vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredhomGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=goodguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhomGPnoncalgoodguess = Reduce(rbind,ZpredhomGPnoncalgoodguess)
-ZpredhomGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=c(500,260),vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredhomGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=badguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhomGPnoncalbadguess = Reduce(rbind,ZpredhomGPnoncalbadguess)
 ```
 
@@ -308,12 +328,11 @@ ZpredhomGPnoncalbadguess = Reduce(rbind,ZpredhomGPnoncalbadguess)
 
 Prediction for hetGP
 ```{r predhetfixed}
-library(parallel)
-ZpredhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=het,u=L2minhet$par,mc.cores = 8)
+ZpredhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=het,u=L2minhet$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhetGPnoncalL2 = Reduce(rbind,ZpredhetGPnoncalL2)
-ZpredhetGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=het,u=c(750, 185),vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredhetGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=het,u=goodguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhetGPnoncalgoodguess = Reduce(rbind,ZpredhetGPnoncalgoodguess)
-ZpredhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=het,u=c(500,260),vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=het,u=badguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhetGPnoncalbadguess = Reduce(rbind,ZpredhetGPnoncalbadguess)
 ```
 
@@ -321,12 +340,11 @@ ZpredhetGPnoncalbadguess = Reduce(rbind,ZpredhetGPnoncalbadguess)
 
 Prediction for seqhetGP
 ```{r predseqhetfixed}
-library(parallel)
-ZpredseqhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=L2minseqhet$par,mc.cores = 8)
+ZpredseqhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=L2minseqhet$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredseqhetGPnoncalL2 = Reduce(rbind,ZpredseqhetGPnoncalL2)
-ZpredseqhetGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=c(750, 185),vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredseqhetGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=goodguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredseqhetGPnoncalgoodguess = Reduce(rbind,ZpredseqhetGPnoncalgoodguess)
-ZpredseqhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=c(500,260),vareps=vareps,loc=testdesign,mc.cores = 8)
+ZpredseqhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=badguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredseqhetGPnoncalbadguess = Reduce(rbind,ZpredseqhetGPnoncalbadguess)
 ```
 

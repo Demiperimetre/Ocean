@@ -58,29 +58,30 @@ SumOfSquares = function(u,GP,XF,yF)
 }
 
 # Functions for prediction from a fixed value for parameters
-prednoncalfixed = function(k,GP,u,vareps,loc) #ATTENTION vareps ajoute par rapport au RMD
+prednoncalfixed = function(k,GP,u,vareps,loc,Ym,Yv)
 {
   p = predict(GP, matrix(c(loc,rep(u,each=nloc)),nrow=nloc))
-  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps)) # ajouter la variance d'obs ??
+  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
   return(Zprednoncal)
 }
 
 
 # Function for prediction when theta is sampled uniformly in the domain (uniform prior distribution) 
-prednoncal = function(k,GP,vareps,loc)
+prednoncal = function(k,GP,vareps,loc,Ym,Yv)
 {
   nloc = nrow(loc)
   p = predict(GP, matrix(c(loc,rep(runif(2),each=nloc)),nrow=nloc))
-  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps)) # ajouter la variance d'obs ??
+  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
   return(Zprednoncal)
 }
 
 # Function for prediction incorporating discrepancy and posterior sample of theta
-predcal = function(k,cal,GP,vareps,loc,YfN,Xfield)
+predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv)
 {
   nloc = nrow(loc)
-  testfield = rbind(matrix(c(loc,rep(cal[k,1:2],each=nloc)),nrow=nloc),
-                    matrix(c(Xfield[,1:2],rep(cal[k,1:2],each=nrow(Xfield))),nrow=nrow(Xfield)))
+  u = c(cal[k,1],cal[k,2])
+  testfield = rbind(cbind(loc,matrix(u,nrow(loc),2,byrow = T)),
+                    cbind(Xfield[,1:2],matrix(u,nrow(Xfield),2,byrow=T)))
   pcal <- predict(GP, testfield ,xprime=testfield)
   CGP = (pcal$cov + t(pcal$cov))/2 + diag(pcal$nugs)
   realCM = as.vector(pcal$mean + rmvnorm(1,rep(0,length(pcal$mean)),CGP))
