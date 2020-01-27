@@ -60,6 +60,7 @@ SumOfSquares = function(u,GP,XF,yF)
 # Functions for prediction from a fixed value for parameters
 prednoncalfixed = function(k,GP,u,vareps,loc,Ym,Yv)
 {
+  nloc = nrow(loc)
   p = predict(GP, matrix(c(loc,rep(u,each=nloc)),nrow=nloc))
   Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
   return(Zprednoncal)

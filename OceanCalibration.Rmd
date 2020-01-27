@@ -308,8 +308,8 @@ SumOfSquares((c(700,200)-100)/900,seqhet,Xfield[,1:2],YfieldnoiseN)
 We propose a "good guess" and a "bad guess". 
 
 ```{r goodbadguesses}
-goodguess = c(750, 185)
-badguess = c(500,300)
+goodguess = (c(750, 215) -100)/900 
+badguess = (c(400,500) -100)/900
 ```
 
 
@@ -349,6 +349,8 @@ ZpredseqhetGPnoncalbadguess = Reduce(rbind,ZpredseqhetGPnoncalbadguess)
 ```
 
 
+
+
 ```{r RMSEprecalib}
 MSEhomnoncalL2 = mean((rowMeans(ZpredhomGPnoncalL2)-Ztest.mean)^2)
 MSEhomnoncalgoodguess = mean((rowMeans(ZpredhomGPnoncalgoodguess)-Ztest.mean)^2)
@@ -360,6 +362,7 @@ MSEseqhetnoncalL2 = mean((rowMeans(ZpredseqhetGPnoncalL2)-Ztest.mean)^2)
 MSEseqhetnoncalgoodguess = mean((rowMeans(ZpredseqhetGPnoncalgoodguess)-Ztest.mean)^2)
 MSEseqhetnoncalbadguess = mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean)^2)
 ```
+
 
 
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP
