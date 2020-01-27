@@ -61,6 +61,8 @@ Ocean Example for Stochastic Simulators: overview with opportunities
     distribution of the parameters are plotted and the prediction
     performance are compared before and after calibration, and also with
     L2 calibration, bad and good guesses of the calibration parameters.
+    [See the knitted
+    version.](https://github.com/Demiperimetre/Ocean/blob/master/OceanCalibration.md)
 
 for any questions related to these scripts, please contact
 **<pierre.barbillon@agroparistech.fr>**
