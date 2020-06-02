@@ -223,6 +223,14 @@ c(scorehom=schom2,scorehet=schet2,scorehetseq=schetseq2)
 
 
 
+To check the accuracy of the emulators, we plot the mean and the sd of the Ocean simulator obtained from the test design:
+```{r sdtest}
+ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+ggplot(test,aes(x=long,y=lat,col=sd))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+```
+
+
+
 ## Replications 
 
 We replicated the emulation from the design building step (see R script *OceanRepeatEmulation.R*). We load the result and display boxplots of MSE and scores over the 100 replications.

@@ -1,5 +1,7 @@
 Ocean Example
 ================
+Pierre Barbillon
+January 16, 2020
 
 ``` r
 library(ggplot2)
@@ -272,6 +274,22 @@ c(scorehom=schom2,scorehet=schet2,scorehetseq=schetseq2)
 
     ##    scorehom    scorehet scorehetseq 
     ##   0.5430387   0.7018025   0.7200361
+
+To check the accuracy of the emulators, we plot the mean and the sd of
+the Ocean simulator obtained from the test
+design:
+
+``` r
+ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+```
+
+![](OceanExampleEmulation2D_files/figure-gfm/sdtest-1.png)<!-- -->
+
+``` r
+ggplot(test,aes(x=long,y=lat,col=sd))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+```
+
+![](OceanExampleEmulation2D_files/figure-gfm/sdtest-2.png)<!-- -->
 
 ## Replications
 

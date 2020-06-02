@@ -6,14 +6,18 @@ RangeEstim = function(XF,yF,GP,u,s2)
   C <- s2*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 + diag(p$nugs)
   res = yF - p$mean
   GPdisc = mleHomGP(X=XF,Z=res,covtype = "Gaussian",known = list(g=s2,beta0=0))
-  return(list(psi=GPdisc$theta,sigb=GPdisc$nu_hat))
+  Sigdisc = cov_gen(XF,theta=u,type="Gaussian")
+  return(list(psi=GPdisc$theta,sigb=GPdisc$nu_hat,Sigdisc=Sigdisc))
 }
 
 
-# fonction for calibration
-likcalibrationwithdisc = function(XF,yF,GP,theta,Sigdisc=NULL)
+# function for calibration
+#priorUpBounds2b for uniform prior on [0,priorUpBounds2b] for s2b variance discrepancy parameter 
+postcalibrationwithdisc = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=NULL,logvar=FALSE)
 {
   
+  # bound on variances 
+  s2upbound = .1
   
   if (is.null(Sigdisc)) bRange = 1
   else bRange = 0
@@ -22,9 +26,22 @@ likcalibrationwithdisc = function(XF,yF,GP,theta,Sigdisc=NULL)
   if(length(theta) != (ncol(GP$X0) - ncol(XF))*(bRange+1) + 2) 
     stop("length(theta), ncol(XF), ncol(GP$X0) mismatch")
   u <- theta[1:ncol(XF)]
-  s2f <- theta[ncol(XF)+1]
-  s2b = theta[ncol(XF)+2]
+  
+ 
+  
+  if (logvar==TRUE)  
+  {
+    s2f <- exp(theta[ncol(XF)+1])
+    s2b = exp(theta[ncol(XF)+2])
+  }
+    else {
+      s2f <- theta[ncol(XF)+1]
+      s2b = theta[ncol(XF)+2]
+    }
+    
   if (bRange==1) thdisc = theta[(ncol(XF)+3):length(theta)]
+  
+
   
   
   ## prior checking  
@@ -32,7 +49,11 @@ likcalibrationwithdisc = function(XF,yF,GP,theta,Sigdisc=NULL)
   if(s2f < 0) return(-Inf)
   if(s2b<0) return(-Inf)
   if (bRange==1) {if(any(thdisc<0)) return(-Inf)}
-  
+  if (!is.null(priorUpBounds2b)) {
+    upbound = min(priorUpBounds2b, s2upbound )
+    if (s2b>upbound) return(-Inf)}
+  if (s2f>s2upbound) return(-Inf)
+    
   ## derive predictive distribution for XF paired with u
   XFU <- cbind(XF, matrix(rep(u, nrow(XF)), ncol=length(u), byrow=TRUE)) 
   p <- predict(GP, XFU, xprime=XFU)
@@ -44,9 +65,52 @@ likcalibrationwithdisc = function(XF,yF,GP,theta,Sigdisc=NULL)
   C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 + diag(p$nugs) +Cdisc  #discrepancy
   
   
+ 
+  
+  
   ## gaussian log density evaluation for yF under that predictive
-  return(dmvnorm(yF, p$mean, C, log=TRUE) - log(s2f)-log(s2b))
+  return(dmvnorm(yF, p$mean, C, log=TRUE) )
 }
+
+
+
+postcalibrationwithoutdisc = function(theta,XF,yF,GP,logvar=FALSE)
+{
+  
+  # bound on variances 
+  s2upbound = .1
+  
+  
+  u <- theta[1:ncol(XF)]
+
+  if (logvar==TRUE)  
+  {
+    s2f <- exp(theta[ncol(XF)+1])
+  }
+  else {
+    s2f <- theta[ncol(XF)+1]
+
+  }
+  
+  
+  ## prior checking  
+  if(any(u < 0 | u > 1)) return (-Inf)
+  if(s2f < 0) return(-Inf)
+  if (s2f>s2upbound) return(-Inf)
+  
+  ## derive predictive distribution for XF paired with u
+  XFU <- cbind(XF, matrix(rep(u, nrow(XF)), ncol=length(u), byrow=TRUE)) 
+  p <- predict(GP, XFU, xprime=XFU)
+  
+ 
+  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 + diag(p$nugs)
+  
+  
+  ## gaussian log density evaluation for yF under that predictive
+  return(dmvnorm(yF, p$mean, C, log=TRUE)  )
+}
+
+
 
 
 # Sum of squares for L2 optimization
@@ -77,8 +141,17 @@ prednoncal = function(k,GP,vareps,loc,Ym,Yv)
 }
 
 # Function for prediction incorporating discrepancy and posterior sample of theta
-predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv)
+predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv,psi=NULL)
 {
+  # log scale
+  cal[k,3] = exp(cal[k,3])
+  cal[k,4] = exp(cal[k,4])
+  if (is.null(psi)) {psi=cal[k,5:6]} # should be given in the post sample cal if not provided
+  
+  # prevent too small value of variance for numerical issues
+  if (cal[k,3]<1e-8) {cal[k,3] = 1e-8}
+  if (cal[k,4]<1e-8) {cal[k,4] = 1e-8}
+  
   nloc = nrow(loc)
   u = c(cal[k,1],cal[k,2])
   testfield = rbind(cbind(loc,matrix(u,nrow(loc),2,byrow = T)),
@@ -87,11 +160,17 @@ predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv)
   CGP = (pcal$cov + t(pcal$cov))/2 + diag(pcal$nugs)
   realCM = as.vector(pcal$mean + rmvnorm(1,rep(0,length(pcal$mean)),CGP))
   diff = YfN - realCM[-(1:nloc)]
-  Cdisc = cal[k,4] * cov_gen(Xfield[,1:2],theta=cal[k,5:6],type="Gaussian") + cal[k,3]* diag(nrow(Xfield))
-  Cdiscloc = cal[k,4] * cov_gen(X1=Xfield[,1:2],X2=loc,theta=cal[k,5:6],type="Gaussian")
-  sigdiscloc = cal[k,4] * cov_gen(loc,theta=cal[k,5:6],type="Gaussian") - t(Cdiscloc) %*% solve(Cdisc,Cdiscloc)
-  realdisc = as.vector(t(Cdiscloc) %*% solve(Cdisc,diff)) + as.vector(rmvnorm(1,rep(0,nloc),sigdiscloc))
-  return( (realCM[1:nloc] + realdisc)*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(Yv*cal[k,3])))
+  Cdisc = cal[k,4] * cov_gen(Xfield[,1:2],theta=psi,type="Gaussian") + cal[k,3]* diag(nrow(Xfield))
+  Cdiscloc = cal[k,4] * cov_gen(X1=Xfield[,1:2],X2=loc,theta=psi,type="Gaussian")
+  sigdiscloc =  cal[k,3]* diag(nrow(loc)) + cal[k,4] * cov_gen(loc,theta=psi,type="Gaussian") - t(Cdiscloc) %*% solve(Cdisc,Cdiscloc)
+  
+  # avoid non positive definite matrix
+  sigdiscloceig = eigen(sigdiscloc)$values
+  if (any(is.complex(sigdiscloceig))) {simdiscloc = 0}
+  else {if (any(eigen(sigdiscloc)$values<=0)) simdiscloc = 0
+  else simdiscloc = as.vector(rmvnorm(1,rep(0,nloc),sigdiscloc))}
+  realdisc = as.vector(t(Cdiscloc) %*% solve(Cdisc,diff)) + simdiscloc
+  return( (realCM[1:nloc] + realdisc)*sqrt(Yv) + Ym )
 }
 
 # Computing score from an empirical distribution
