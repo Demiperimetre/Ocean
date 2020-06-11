@@ -3,7 +3,7 @@ RangeEstim = function(XF,yF,GP,u,s2)
 {
   XFU <- cbind(XF, matrix(rep(u, nrow(XF)), ncol=length(u), byrow=TRUE)) 
   p <- predict(GP, XFU, xprime=XFU)
-  C <- s2*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 + diag(p$nugs)
+  C <- s2*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 #+ diag(p$nugs)
   res = yF - p$mean
   GPdisc = mleHomGP(X=XF,Z=res,covtype = "Gaussian",known = list(g=s2,beta0=0))
   Sigdisc = cov_gen(XF,theta=u,type="Gaussian")
@@ -62,7 +62,7 @@ postcalibrationwithdisc = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=N
     Cdisc = s2b * cov_gen(XF,theta=thdisc,type="Gaussian")
   }
   
-  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 + diag(p$nugs) +Cdisc  #discrepancy
+  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2  +Cdisc  #discrepancy  + diag(p$nugs) # for variance of sto sim
   
   
  
@@ -103,7 +103,7 @@ postcalibrationwithoutdisc = function(theta,XF,yF,GP,logvar=FALSE)
   p <- predict(GP, XFU, xprime=XFU)
   
  
-  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 + diag(p$nugs)
+  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 #+ diag(p$nugs) for variance of stosim
   
   
   ## gaussian log density evaluation for yF under that predictive
@@ -126,7 +126,8 @@ prednoncalfixed = function(k,GP,u,vareps,loc,Ym,Yv)
 {
   nloc = nrow(loc)
   p = predict(GP, matrix(c(loc,rep(u,each=nloc)),nrow=nloc))
-  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
+  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
+    #(p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
   return(Zprednoncal)
 }
 
@@ -136,7 +137,8 @@ prednoncal = function(k,GP,vareps,loc,Ym,Yv)
 {
   nloc = nrow(loc)
   p = predict(GP, matrix(c(loc,rep(runif(2),each=nloc)),nrow=nloc))
-  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
+  Zprednoncal = (p$mean + rnorm(nloc,0,sqrt(p$sd2)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
+    #(p$mean + rnorm(nloc,0,sqrt(p$sd2+p$nugs)))*sqrt(Yv) + Ym + rnorm(nloc,0,sqrt(vareps))
   return(Zprednoncal)
 }
 
@@ -157,7 +159,8 @@ predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv,psi=NULL)
   testfield = rbind(cbind(loc,matrix(u,nrow(loc),2,byrow = T)),
                     cbind(Xfield[,1:2],matrix(u,nrow(Xfield),2,byrow=T)))
   pcal <- predict(GP, testfield ,xprime=testfield)
-  CGP = (pcal$cov + t(pcal$cov))/2 + diag(pcal$nugs)
+  #CGP = (pcal$cov + t(pcal$cov))/2 + diag(pcal$nugs)
+  CGP = (pcal$cov + t(pcal$cov))/2 #+ diag(pcal$nugs)
   realCM = as.vector(pcal$mean + rmvnorm(1,rep(0,length(pcal$mean)),CGP))
   diff = YfN - realCM[-(1:nloc)]
   Cdisc = cal[k,4] * cov_gen(Xfield[,1:2],theta=psi,type="Gaussian") + cal[k,3]* diag(nrow(Xfield))
@@ -179,7 +182,7 @@ scoreEstDens = function(Ech,v)
   vscore=numeric(ncol(Ech))
   for (k in 1:ncol(Ech))
   {
-    estd = density(Ech[,k])
+    estd = density(Ech[,k],from=min(v),to=max(v))
     vscore[k] = log(approx(estd$x,estd$y,xout=v[k])$y)
   }
   return(mean(vscore))

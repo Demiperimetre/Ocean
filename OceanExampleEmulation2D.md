@@ -63,8 +63,8 @@ GPs.
 ``` r
 # settings for GPs
 lower <- rep(0.01, 2)
-upper <- rep(30, 2)
-covtype <- "Matern5_2"
+upper <- rep(10, 2)
+covtype <- "Gaussian"
 nc <- list(g_min=1e-6, g_bounds=c(1e-6, 1),  
            lowerDelta=log(1e-6))
 settings <- list(linkThetas="none", logN=TRUE, initStrategy="smoothed", 
@@ -168,7 +168,7 @@ ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TR
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20homgp-1.png)<!-- -->
 
 ``` r
-ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$psd,gridhet$psd),max(gridHom$psd,gridhet$psd)))
+ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20homgp-2.png)<!-- -->
@@ -183,7 +183,7 @@ ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TR
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20hetgp-1.png)<!-- -->
 
 ``` r
-ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$psd,gridhet$psd),max(gridHom$psd,gridhet$psd)))
+ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20hetgp-2.png)<!-- -->
@@ -204,13 +204,13 @@ ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate =
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20seqhetgp-2.png)<!-- -->
 
 ``` r
-ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10))+geom_point(data=designseq,aes(x=long,y=lat,colour=rep))+scale_color_gradient(low="grey", high="black")
+ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))+geom_point(data=designseq,aes(x=long,y=lat,colour=rep))+scale_color_gradient(low="grey", high="black")
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20seqhetgp-3.png)<!-- -->
 
 ``` r
-ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10))+geom_text(data=designseq,aes(x=long,y=lat,label=rep))
+ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))+geom_text(data=designseq,aes(x=long,y=lat,label=rep))
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20seqhetgp-4.png)<!-- -->
@@ -259,34 +259,34 @@ c(msehom=msehom,msehet=msehet,msehetseq=msehetseq)
 ```
 
     ##     msehom     msehet  msehetseq 
-    ## 0.03965503 0.03700413 0.02568326
+    ## 0.05339809 0.04743741 0.02881427
 
 ``` r
 c(scorehom=schom,scorehet=schet,scorehetseq=schetseq)
 ```
 
     ##    scorehom    scorehet scorehetseq 
-    ##    1.723837    2.008139    2.034156
+    ##   0.6290392   1.1217246   1.3910662
 
 ``` r
 c(scorehom=schom2,scorehet=schet2,scorehetseq=schetseq2)
 ```
 
     ##    scorehom    scorehet scorehetseq 
-    ##   0.5430387   0.7018025   0.7200361
+    ##   0.5150449   0.6550920   0.7005112
 
 To check the accuracy of the emulators, we plot the mean and the sd of
 the Ocean simulator obtained from the test
 design:
 
 ``` r
-ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))+theme_bw()
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/sdtest-1.png)<!-- -->
 
 ``` r
-ggplot(test,aes(x=long,y=lat,col=sd))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+ggplot(test,aes(x=long,y=lat,col=sd))+geom_point()+scale_color_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))+theme_bw()
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/sdtest-2.png)<!-- -->
@@ -340,3 +340,67 @@ grid.arrange(p1,p2,p3,nrow=1)
     ## Warning: Removed 3 rows containing non-finite values (stat_boxplot).
 
 ![](OceanExampleEmulation2D_files/figure-gfm/replications-1.png)<!-- -->
+
+Find out which is best for MSE, and Scores
+
+``` r
+MSE = RES[,1:3]
+names(MSE) = c("homGP","hetGP","seqhetGP")
+table(apply(MSE,1,which.min))
+```
+
+    ## 
+    ##  1  2  3 
+    ##  2  8 90
+
+``` r
+ScoreMean = (RES[,4:6])
+table(apply(ScoreMean,1,which.max))
+```
+
+    ## 
+    ##  1  2  3 
+    ## 16 28 56
+
+``` r
+Score = (RES[,7:9])
+table(apply(Score,1,which.max))
+```
+
+    ## 
+    ##  1  2  3 
+    ##  1 38 61
+
+``` r
+Ghet
+```
+
+    ## N =  1000  n =  50  d =  2 
+    ## Gaussian  covariance lengthscale values of the main process:  0.3441147 0.0111555 
+    ## Variance/scale hyperparameter:  0.9280129 
+    ## Summary of Lambda values: 
+    ##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+    ## 0.0001282 0.0735735 0.1334925 0.1519881 0.2550973 0.3755305 
+    ## Given constant trend value:  0 
+    ## Gaussian  covariance lengthscale values of the log-noise process:  0.01502537 0.04797606 
+    ## Nugget of the log-noise process:  1e-06 
+    ## Estimated constant trend value of the log-noise process:  -2.823212 
+    ## MLE optimization: 
+    ##  Log-likelihood =  -344.3424 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  360 360 ; message:  CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH
+
+``` r
+seqGhet
+```
+
+    ## N =  1000  n =  225  d =  2 
+    ## Gaussian  covariance lengthscale values of the main process:  0.0771807 0.05331273 
+    ## Variance/scale hyperparameter:  4.246207 
+    ## Summary of Lambda values: 
+    ##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+    ## 0.004494 0.020415 0.027928 0.034242 0.044579 0.095034 
+    ## Given constant trend value:  0 
+    ## Gaussian  covariance lengthscale values of the log-noise process:  0.3064847 0.1610396 
+    ## Nugget of the log-noise process:  1.488863e-06 
+    ## Estimated constant trend value of the log-noise process:  -3.897588 
+    ## MLE optimization: 
+    ##  Log-likelihood =  683.3315 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  6 6 ; message:  CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH

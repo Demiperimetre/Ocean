@@ -186,7 +186,11 @@ grid.arrange(arrangeGrob(hom1,hom2,hom3,hom4,top="homGP",ncol=4),arrangeGrob(het
              arrangeGrob(seqhet1,seqhet2,seqhet3,seqhet4,top="seq hetGP",ncol=4),nrow=3,ncol=1)
 ```
 
-    ## Warning: Removed 55 rows containing non-finite values (stat_density).
+    ## Warning: Removed 1 rows containing non-finite values (stat_density).
+
+    ## Warning: Removed 8 rows containing non-finite values (stat_density).
+
+    ## Warning: Removed 64 rows containing non-finite values (stat_density).
 
 ![](OceanCalibration_files/figure-gfm/plotcalib-1.png)<!-- -->
 
@@ -198,6 +202,7 @@ Loading test data
 test = read.csv("testdata2D.csv",sep=" ")
 testdesign = as.matrix(test[,1:2])
 Ztest.mean = test[,3]
+Ztest.sim = Ztest.mean + rnorm(length(Ztest.mean),0,sqrt(vareps))
 ```
 
 We run prediction from a uniform prior on the calibration parameter and
@@ -383,12 +388,12 @@ MSEseqhetcal = mean((rowMeans(ZpredseqhetGPcal)-Ztest.mean)^2)
 ```
 
 ``` r
-Scorehomnoncal = scoreEstDens(ZpredhomGPnoncal,Ztest.mean)
-Scorehomcal = scoreEstDens(ZpredhomGPcal,Ztest.mean)
-Scorehetnoncal = scoreEstDens(ZpredhetGPnoncal,Ztest.mean)
-Scorehetcal = scoreEstDens(ZpredhetGPcal,Ztest.mean)
-Scoreseqhetnoncal = scoreEstDens(ZpredseqhetGPnoncal,Ztest.mean)
-Scoreseqhetcal = scoreEstDens(ZpredseqhetGPcal,Ztest.mean)
+Scorehomnoncal = scoreEstDens(ZpredhomGPnoncal,Ztest.sim)
+Scorehomcal = scoreEstDens(ZpredhomGPcal,Ztest.sim)
+Scorehetnoncal = scoreEstDens(ZpredhetGPnoncal,Ztest.sim)
+Scorehetcal = scoreEstDens(ZpredhetGPcal,Ztest.sim)
+Scoreseqhetnoncal = scoreEstDens(ZpredseqhetGPnoncal,Ztest.sim)
+Scoreseqhetcal = scoreEstDens(ZpredseqhetGPcal,Ztest.sim)
 ```
 
 ## Other pre-calibration
@@ -410,19 +415,19 @@ L2minhom = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=hom,XF=Xfield[,1:2],yF
 L2minhom$par* 900 +100
 ```
 
-    ## [1] 1000.0000  298.3708
+    ## [1] 600.8131 244.0772
 
 ``` r
 L2minhom$value
 ```
 
-    ## [1] 33.78904
+    ## [1] 9.373462
 
 ``` r
 SumOfSquares((c(700,200)-100)/900,hom,Xfield[,1:2],YfieldnoiseN)
 ```
 
-    ## [1] 34.49721
+    ## [1] 9.619083
 
 SS minimizer for
 hetGP
@@ -438,19 +443,19 @@ L2minhet = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=het,XF=Xfield[,1:2],yF
 L2minhet$par* 900 +100
 ```
 
-    ## [1] 1000.0000  309.4502
+    ## [1] 527.0052 233.6657
 
 ``` r
 L2minhet$value
 ```
 
-    ## [1] 34.13061
+    ## [1] 10.23152
 
 ``` r
 SumOfSquares((c(700,200)-100)/900,het,Xfield[,1:2],YfieldnoiseN)
 ```
 
-    ## [1] 34.69017
+    ## [1] 10.54336
 
 SS minimizer for
 seqhetGP
@@ -466,19 +471,19 @@ L2minseqhet = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=seqhet,XF=Xfield[,1
 L2minseqhet$par* 900 +100
 ```
 
-    ## [1] 992.0018 316.7748
+    ## [1] 613.9772 247.8322
 
 ``` r
 L2minseqhet$value
 ```
 
-    ## [1] 35.93268
+    ## [1] 11.13717
 
 ``` r
 SumOfSquares((c(700,200)-100)/900,seqhet,Xfield[,1:2],YfieldnoiseN)
 ```
 
-    ## [1] 36.75453
+    ## [1] 11.43738
 
 We propose a “good guess” and a “bad guess”.
 
@@ -547,20 +552,20 @@ rbind(c(MSEhomnoncalL2,MSEhomnoncalbadguess,MSEhomnoncalgoodguess,MSEhomnoncal,M
 ```
 
     ##          [,1]     [,2]     [,3]     [,4]     [,5]
-    ## [1,] 83.77190 85.44316 83.80112 85.41880 84.15743
-    ## [2,] 83.81073 85.53442 84.04735 84.57933 84.42222
-    ## [3,] 83.85439 85.74585 83.92970 85.10718 84.07739
+    ## [1,] 83.97062 85.43576 83.88119 84.84711 83.89629
+    ## [2,] 83.98222 85.51368 83.95764 85.93009 84.07385
+    ## [3,] 83.88084 85.50284 83.91369 85.52711 83.80031
 
 ``` r
-ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.mean)
-Scorehomnoncalbadguess = scoreEstDens(ZpredhomGPnoncalbadguess,Ztest.mean)
-Scorehomnoncalgoodguess = scoreEstDens(ZpredhomGPnoncalgoodguess,Ztest.mean)
-ScorehetnoncalL2 = scoreEstDens(ZpredhetGPnoncalL2,Ztest.mean)
-Scorehetnoncalbadguess = scoreEstDens(ZpredhetGPnoncalbadguess,Ztest.mean)
-Scorehetnoncalgoodguess = scoreEstDens(ZpredhetGPnoncalgoodguess,Ztest.mean)
-ScoreseqhetnoncalL2 = scoreEstDens(ZpredseqhetGPnoncalL2,Ztest.mean)
-Scoreseqhetnoncalbadguess = scoreEstDens(ZpredseqhetGPnoncalbadguess,Ztest.mean)
-Scoreseqhetnoncalgoodguess = scoreEstDens(ZpredseqhetGPnoncalgoodguess,Ztest.mean)
+ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.sim)
+Scorehomnoncalbadguess = scoreEstDens(ZpredhomGPnoncalbadguess,Ztest.sim)
+Scorehomnoncalgoodguess = scoreEstDens(ZpredhomGPnoncalgoodguess,Ztest.sim)
+ScorehetnoncalL2 = scoreEstDens(ZpredhetGPnoncalL2,Ztest.sim)
+Scorehetnoncalbadguess = scoreEstDens(ZpredhetGPnoncalbadguess,Ztest.sim)
+Scorehetnoncalgoodguess = scoreEstDens(ZpredhetGPnoncalgoodguess,Ztest.sim)
+ScoreseqhetnoncalL2 = scoreEstDens(ZpredseqhetGPnoncalL2,Ztest.sim)
+Scoreseqhetnoncalbadguess = scoreEstDens(ZpredseqhetGPnoncalbadguess,Ztest.sim)
+Scoreseqhetnoncalgoodguess = scoreEstDens(ZpredseqhetGPnoncalgoodguess,Ztest.sim)
 ```
 
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP 1st column
@@ -575,9 +580,9 @@ rbind(c(ScorehomnoncalL2,Scorehomnoncalbadguess,Scorehomnoncalgoodguess,Scorehom
 ```
 
     ##           [,1]      [,2]      [,3]      [,4]      [,5]
-    ## [1,] -2.543532 -2.636955 -2.540506 -2.648940 -2.519055
-    ## [2,] -2.495331 -2.544673 -2.482420 -2.577830 -2.431945
-    ## [3,] -2.471494 -2.510947 -2.446159 -2.528338 -2.357650
+    ## [1,] -2.342108 -3.160806 -2.339245 -2.498532 -2.329667
+    ## [2,] -2.392150      -Inf -2.366686 -2.509723 -2.353821
+    ## [3,] -2.372010 -3.130177 -2.363732 -2.500672 -2.339425
 
 ``` r
 VarPredhomnoncal = mean(apply(ZpredhomGPnoncal,1,var))
@@ -608,7 +613,7 @@ rbind(c(VarPredhomnoncalL2,VarPredhomnoncalbadguess,VarPredhomnoncalgoodguess,Va
       c(VarPredseqhetnoncalL2,VarPredseqhetnoncalbadguess,VarPredseqhetnoncalgoodguess,VarPredseqhetnoncal,VarPredseqhetcal))
 ```
 
-    ##          [,1]     [,2]      [,3]     [,4]      [,5]
-    ## [1,] 98.45757 94.53598  99.98640 94.35108  98.11215
-    ## [2,] 97.05579 94.83946  99.64745 95.86531 100.15702
-    ## [3,] 99.41299 96.83831 104.31305 99.04596  96.55007
+    ##          [,1]     [,2]     [,3]     [,4]     [,5]
+    ## [1,] 81.77566 76.93725 82.54157 76.98576 82.35174
+    ## [2,] 80.15623 76.73324 80.03039 77.00940 81.17333
+    ## [3,] 84.28415 79.01156 85.16288 80.79259 86.06380

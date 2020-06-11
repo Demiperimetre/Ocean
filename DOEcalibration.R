@@ -31,7 +31,7 @@ u1 = (700 -100)/900
 u2 = (200- 100)/900
 Xfield = cbind(X0,u1,u2)
 ### run the simulator
-Yfield = sapply(1:n,function(i) simulator4d(Xfield[i,]))
+Yfield = sapply(1:n,function(i) simulator4d(Xfield[i,],NPATHS=1200))
 ### add a Gaussian withe noise
 vareps = 2^2 
 Yfieldnoise = Yfield + rnorm(length(Yfield),0,sd=sqrt(vareps)) 

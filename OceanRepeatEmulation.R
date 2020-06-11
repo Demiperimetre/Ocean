@@ -4,10 +4,9 @@ rm(list=ls())
 library(ggplot2)
 library(colorRamps)
 library(gridExtra)
-library(DiceKriging)
+#library(DiceKriging)
 library(DiceDesign)
 library(hetGP)
-library(MCMCpack)
 library(lhs)
 library(mvtnorm)
 library(plyr)
@@ -30,8 +29,8 @@ set.seed(seed)
 
 ## GP settings
 lower <- rep(0.01, 2)
-upper <- rep(30, 2)
-covtype <- "Matern5_2"
+upper <- rep(10, 2)
+covtype <- "Gaussian"
 nc <- list(g_min=1e-6, g_bounds=c(1e-6, 1), lowerDelta=log(1e-6))
 settings <- list(linkThetas="none", logN=TRUE, initStrategy="smoothed", 
                  checkHom=TRUE, penalty=TRUE, trace=0, return.matrices=TRUE, return.hom=FALSE)

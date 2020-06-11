@@ -61,8 +61,8 @@ These are the settings for computing homoskedastic and heteroskedastic GPs.
 ```{r GP settings}
 # settings for GPs
 lower <- rep(0.01, 2)
-upper <- rep(30, 2)
-covtype <- "Matern5_2"
+upper <- rep(10, 2)
+covtype <- "Gaussian"
 nc <- list(g_min=1e-6, g_bounds=c(1e-6, 1),  
            lowerDelta=log(1e-6))
 settings <- list(linkThetas="none", logN=TRUE, initStrategy="smoothed", 
@@ -159,13 +159,13 @@ gridhetseq$nug = gridhetseq$nug * Zv
 Plots for homGP
 ```{r plot homgp}
 ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) + scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))
-ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$psd,gridhet$psd),max(gridHom$psd,gridhet$psd)))
+ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))
 ```
 
 Plots for hetGP
 ```{r plot hetgp}
 ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) +scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))
-ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$psd,gridhet$psd),max(gridHom$psd,gridhet$psd)))
+ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))
 ```
 
 
@@ -173,8 +173,8 @@ Plots for SeqhetGP
 ```{r plot seqhetgp}
 ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) + scale_fill_gradientn(colours=matlab.like(10))
 ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) + scale_fill_gradientn(colours=matlab.like(10))+geom_point(data=designseq,aes(x=long,y=lat,colour=rep))+scale_color_gradient(low="grey", high="black")
-ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10))+geom_point(data=designseq,aes(x=long,y=lat,colour=rep))+scale_color_gradient(low="grey", high="black")
-ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10))+geom_text(data=designseq,aes(x=long,y=lat,label=rep))
+ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))+geom_point(data=designseq,aes(x=long,y=lat,colour=rep))+scale_color_gradient(low="grey", high="black")
+ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRUE)+ scale_fill_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))+geom_text(data=designseq,aes(x=long,y=lat,label=rep))
 ```
 
 
@@ -225,8 +225,8 @@ c(scorehom=schom2,scorehet=schet2,scorehetseq=schetseq2)
 
 To check the accuracy of the emulators, we plot the mean and the sd of the Ocean simulator obtained from the test design:
 ```{r sdtest}
-ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
-ggplot(test,aes(x=long,y=lat,col=sd))+geom_point()+scale_color_gradientn(colours=matlab.like(10))+theme_bw()
+ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))+theme_bw()
+ggplot(test,aes(x=long,y=lat,col=sd))+geom_point()+scale_color_gradientn(colours=matlab.like(10),limits=c(0,max(gridHom$psd,gridhet$psd,6.5)))+theme_bw()
 ```
 
 
@@ -259,4 +259,26 @@ p3=ggplot(Score,aes(x=GP,y=Score))+theme_bw()+geom_boxplot()
 
 grid.arrange(p1,p2,p3,nrow=1)
 ```
+
+
+Find out which is best for MSE, and Scores
+```{r whichbest}
+MSE = RES[,1:3]
+names(MSE) = c("homGP","hetGP","seqhetGP")
+table(apply(MSE,1,which.min))
+
+ScoreMean = (RES[,4:6])
+table(apply(ScoreMean,1,which.max))
+
+Score = (RES[,7:9])
+table(apply(Score,1,which.max))
+
+```
+
+
+```{r}
+Ghet
+seqGhet
+```
+
 

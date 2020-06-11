@@ -203,6 +203,7 @@ Loading test data
 test = read.csv("testdata2D.csv",sep=" ")
 testdesign = as.matrix(test[,1:2])
 Ztest.mean = test[,3]
+Ztest.sim = Ztest.mean + rnorm(length(Ztest.mean),0,sqrt(vareps))
 ```
 
 
@@ -274,12 +275,12 @@ MSEseqhetcal = mean((rowMeans(ZpredseqhetGPcal)-Ztest.mean)^2)
 ```
 
 ```{r scores}
-Scorehomnoncal = scoreEstDens(ZpredhomGPnoncal,Ztest.mean)
-Scorehomcal = scoreEstDens(ZpredhomGPcal,Ztest.mean)
-Scorehetnoncal = scoreEstDens(ZpredhetGPnoncal,Ztest.mean)
-Scorehetcal = scoreEstDens(ZpredhetGPcal,Ztest.mean)
-Scoreseqhetnoncal = scoreEstDens(ZpredseqhetGPnoncal,Ztest.mean)
-Scoreseqhetcal = scoreEstDens(ZpredseqhetGPcal,Ztest.mean)
+Scorehomnoncal = scoreEstDens(ZpredhomGPnoncal,Ztest.sim)
+Scorehomcal = scoreEstDens(ZpredhomGPcal,Ztest.sim)
+Scorehetnoncal = scoreEstDens(ZpredhetGPnoncal,Ztest.sim)
+Scorehetcal = scoreEstDens(ZpredhetGPcal,Ztest.sim)
+Scoreseqhetnoncal = scoreEstDens(ZpredseqhetGPnoncal,Ztest.sim)
+Scoreseqhetcal = scoreEstDens(ZpredseqhetGPcal,Ztest.sim)
 ```
 
 
@@ -388,15 +389,15 @@ rbind(c(MSEhomnoncalL2,MSEhomnoncalbadguess,MSEhomnoncalgoodguess,MSEhomnoncal,M
 
 
 ```{r Scores}
-ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.mean)
-Scorehomnoncalbadguess = scoreEstDens(ZpredhomGPnoncalbadguess,Ztest.mean)
-Scorehomnoncalgoodguess = scoreEstDens(ZpredhomGPnoncalgoodguess,Ztest.mean)
-ScorehetnoncalL2 = scoreEstDens(ZpredhetGPnoncalL2,Ztest.mean)
-Scorehetnoncalbadguess = scoreEstDens(ZpredhetGPnoncalbadguess,Ztest.mean)
-Scorehetnoncalgoodguess = scoreEstDens(ZpredhetGPnoncalgoodguess,Ztest.mean)
-ScoreseqhetnoncalL2 = scoreEstDens(ZpredseqhetGPnoncalL2,Ztest.mean)
-Scoreseqhetnoncalbadguess = scoreEstDens(ZpredseqhetGPnoncalbadguess,Ztest.mean)
-Scoreseqhetnoncalgoodguess = scoreEstDens(ZpredseqhetGPnoncalgoodguess,Ztest.mean)
+ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.sim)
+Scorehomnoncalbadguess = scoreEstDens(ZpredhomGPnoncalbadguess,Ztest.sim)
+Scorehomnoncalgoodguess = scoreEstDens(ZpredhomGPnoncalgoodguess,Ztest.sim)
+ScorehetnoncalL2 = scoreEstDens(ZpredhetGPnoncalL2,Ztest.sim)
+Scorehetnoncalbadguess = scoreEstDens(ZpredhetGPnoncalbadguess,Ztest.sim)
+Scorehetnoncalgoodguess = scoreEstDens(ZpredhetGPnoncalgoodguess,Ztest.sim)
+ScoreseqhetnoncalL2 = scoreEstDens(ZpredseqhetGPnoncalL2,Ztest.sim)
+Scoreseqhetnoncalbadguess = scoreEstDens(ZpredseqhetGPnoncalbadguess,Ztest.sim)
+Scoreseqhetnoncalgoodguess = scoreEstDens(ZpredseqhetGPnoncalgoodguess,Ztest.sim)
 ```
 
 
