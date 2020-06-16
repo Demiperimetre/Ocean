@@ -1,7 +1,7 @@
 Ocean Example
 ================
 Pierre Barbillon
-January 16, 2020
+June 16, 2020
 
 ``` r
 library(ggplot2)
@@ -64,7 +64,7 @@ GPs.
 # settings for GPs
 lower <- rep(0.01, 2)
 upper <- rep(10, 2)
-covtype <- "Gaussian"
+covtype <- "Matern5_2"
 nc <- list(g_min=1e-6, g_bounds=c(1e-6, 1),  
            lowerDelta=log(1e-6))
 settings <- list(linkThetas="none", logN=TRUE, initStrategy="smoothed", 
@@ -224,6 +224,8 @@ of the predictions.
 test = read.csv("testdata2D.csv",sep=" ")
 testdesign = as.matrix(test[,1:2])
 Ztest.mean = test[,3]
+Ztest.sd = test[,4]
+
 #Hom GP
 predhom = predict(x = testdesign, object = Ghom)
 #Het GP
@@ -233,47 +235,48 @@ predHetseq = predict(x = testdesign, object = seqGhet)
 
 # Normalize Ztest.mean
 Ztest.mean.N = (Ztest.mean - Zm)/sqrt(Zv)
+Ztest.sd.N = Ztest.sd/sqrt(Zv)
 
-# MSE
+# MSE for the mean
 msehom = mean(((predhom$mean-Ztest.mean.N))^2)
 msehet = mean(((predhet$mean-Ztest.mean.N))^2)
 msehetseq = mean(((predHetseq$mean-Ztest.mean.N))^2)
 
-# scores for the mean prediction
-schom = mean(-(Ztest.mean.N-predhom$mean)^2/(predhom$sd2) -log(predhom$sd2))
-schet = mean(-(Ztest.mean.N-predhet$mean)^2/(predhet$sd2) -log(predhet$sd2))
-schetseq = mean(-(Ztest.mean.N-predHetseq$mean)^2/(predHetseq$sd2) -log(predHetseq$sd2))
+#MSE for sd
+msehomsd = mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)
+msehetsd = mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)
+msehetseqsd = mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)
 
 # scores for the prediction of a single run of the simulator
 Ztest = (apply(testdesign,1,simulator)-Zm)/sqrt(Zv) # for computing scores on a single realization of the simulator
-schom2 = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
-schet2 = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
-schetseq2 = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
+schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
+schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
+schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
 ```
 
-We compute the mean square error, the score on the mean prediction and
-the score for a prediction of a run of the simulator.
+We compute the mean square error and the score for a prediction of a run
+of the simulator.
 
 ``` r
 c(msehom=msehom,msehet=msehet,msehetseq=msehetseq)
 ```
 
     ##     msehom     msehet  msehetseq 
-    ## 0.05339809 0.04743741 0.02881427
+    ## 0.03965506 0.03695992 0.02293363
+
+``` r
+c(msehom=msehomsd,msehet=msehetsd,msehetseq=msehetseqsd)
+```
+
+    ##     msehom     msehet  msehetseq 
+    ## 0.02629828 0.01164999 0.02054881
 
 ``` r
 c(scorehom=schom,scorehet=schet,scorehetseq=schetseq)
 ```
 
     ##    scorehom    scorehet scorehetseq 
-    ##   0.6290392   1.1217246   1.3910662
-
-``` r
-c(scorehom=schom2,scorehet=schet2,scorehetseq=schetseq2)
-```
-
-    ##    scorehom    scorehet scorehetseq 
-    ##   0.5150449   0.6550920   0.7005112
+    ##   0.6703442   0.7890090   0.8355525
 
 To check the accuracy of the emulators, we plot the mean and the sd of
 the Ocean simulator obtained from the test
@@ -300,30 +303,32 @@ MSE and scores over the 100 replications.
 ``` r
 RES = read.table("EmulationRep.csv",sep=" ")
 
-# MSE
+# MSE for the mean
 MSE = melt(RES[,1:3])
 ```
 
     ## No id variables; using all as measure variables
 
 ``` r
-names(MSE) = c("GP","MSE")
+names(MSE) = c("GP","MSEmean")
 MSE$GP =revalue(MSE$GP, c("msehom"="homGP", "msehet"="hetGP","msehetseq"="seqhetGP"))
-p1=ggplot(MSE,aes(x=GP,y=MSE))+theme_bw()+geom_boxplot()
+p1=ggplot(MSE,aes(x=GP,y=MSEmean))+theme_bw()+geom_boxplot()
 
 
-# Prediction Score for the  Mean
-ScoreMean = melt(RES[,4:6])
+# MSE sd
+MSEsd = melt(RES[,4:6])
 ```
 
     ## No id variables; using all as measure variables
 
 ``` r
-names(ScoreMean) = c("GP","ScoreMean")
-ScoreMean$GP =revalue(ScoreMean$GP, c("scoremeanhom"="homGP", "scoremeanhet"="hetGP","scoremeanhetseq"="seqhetGP"))
-p2=ggplot(ScoreMean,aes(x=GP,y=ScoreMean))+theme_bw()+geom_boxplot()
+names(MSEsd) = c("GP","MSEsd")
+MSEsd$GP =revalue(MSEsd$GP, c("msehomsd"="homGP", "msehetsd"="hetGP","msehetseqsd"="seqhetGP"))
+p2=ggplot(MSEsd,aes(x=GP,y=MSEsd))+theme_bw()+geom_boxplot()
 
-# Prediction Score for a run
+
+
+# Prediction Score 
 Score = melt(RES[,7:9])
 ```
 
@@ -337,8 +342,6 @@ p3=ggplot(Score,aes(x=GP,y=Score))+theme_bw()+geom_boxplot()
 grid.arrange(p1,p2,p3,nrow=1)
 ```
 
-    ## Warning: Removed 3 rows containing non-finite values (stat_boxplot).
-
 ![](OceanExampleEmulation2D_files/figure-gfm/replications-1.png)<!-- -->
 
 Find out which is best for MSE, and Scores
@@ -351,16 +354,7 @@ table(apply(MSE,1,which.min))
 
     ## 
     ##  1  2  3 
-    ##  2  8 90
-
-``` r
-ScoreMean = (RES[,4:6])
-table(apply(ScoreMean,1,which.max))
-```
-
-    ## 
-    ##  1  2  3 
-    ## 16 28 56
+    ##  4  2 94
 
 ``` r
 Score = (RES[,7:9])
@@ -368,39 +362,5 @@ table(apply(Score,1,which.max))
 ```
 
     ## 
-    ##  1  2  3 
-    ##  1 38 61
-
-``` r
-Ghet
-```
-
-    ## N =  1000  n =  50  d =  2 
-    ## Gaussian  covariance lengthscale values of the main process:  0.3441147 0.0111555 
-    ## Variance/scale hyperparameter:  0.9280129 
-    ## Summary of Lambda values: 
-    ##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
-    ## 0.0001282 0.0735735 0.1334925 0.1519881 0.2550973 0.3755305 
-    ## Given constant trend value:  0 
-    ## Gaussian  covariance lengthscale values of the log-noise process:  0.01502537 0.04797606 
-    ## Nugget of the log-noise process:  1e-06 
-    ## Estimated constant trend value of the log-noise process:  -2.823212 
-    ## MLE optimization: 
-    ##  Log-likelihood =  -344.3424 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  360 360 ; message:  CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH
-
-``` r
-seqGhet
-```
-
-    ## N =  1000  n =  225  d =  2 
-    ## Gaussian  covariance lengthscale values of the main process:  0.0771807 0.05331273 
-    ## Variance/scale hyperparameter:  4.246207 
-    ## Summary of Lambda values: 
-    ##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-    ## 0.004494 0.020415 0.027928 0.034242 0.044579 0.095034 
-    ## Given constant trend value:  0 
-    ## Gaussian  covariance lengthscale values of the log-noise process:  0.3064847 0.1610396 
-    ## Nugget of the log-noise process:  1.488863e-06 
-    ## Estimated constant trend value of the log-noise process:  -3.897588 
-    ## MLE optimization: 
-    ##  Log-likelihood =  683.3315 ; Nb of evaluations (obj, gradient) by L-BFGS-B:  6 6 ; message:  CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH
+    ##  2  3 
+    ## 44 56

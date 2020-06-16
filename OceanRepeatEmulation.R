@@ -1,4 +1,5 @@
 rm(list=ls())
+setwd("/home/pbarbillon/save/Ocean/")
 
 ## Load useful packages
 library(ggplot2)
@@ -30,9 +31,9 @@ set.seed(seed)
 ## GP settings
 lower <- rep(0.01, 2)
 upper <- rep(10, 2)
-covtype <- "Gaussian"
+covtype <- "Matern5_2"
 nc <- list(g_min=1e-6, g_bounds=c(1e-6, 1), lowerDelta=log(1e-6))
-settings <- list(linkThetas="none", logN=TRUE, initStrategy="smoothed", 
+settings <- list(linkThetas="none", logN=TRUE, initStrategy="smoothed",
                  checkHom=TRUE, penalty=TRUE, trace=0, return.matrices=TRUE, return.hom=FALSE)
 control <- list(tol_dist=1e-4, tol_diff=1e-4, multi.start=30)
 
@@ -41,20 +42,20 @@ control <- list(tol_dist=1e-4, tol_diff=1e-4, multi.start=30)
 test = read.csv("testdata2D.csv",sep=" ")
 testdesign = as.matrix(test[,1:2])
 Ztest.mean = test[,3]
-
+Ztest.sd = test[,4]
 
 ## Do everything in parallel
 RESrep = mclapply(1:Nrep,
 function(k){
 # space filling design
-n = 50
+n=50#n = 80 #
 X0 = randomLHS(n,2)
 X0 = maximinSA_LHS(X0)$design
 X <- rbind(X0, X0, X0, X0, X0, X0, X0, X0, X0, X0)
 X <- rbind(X, X)
 Z <- apply(X, 1, simulator)
 
-# normalization 
+# normalization
 Zm <- mean(Z)
 Zv <- var(Z)
 Z <- (Z - Zm)/sqrt(Zv)
@@ -63,10 +64,10 @@ Z <- (Z - Zm)/sqrt(Zv)
 # GP fit
 ## Homoskedastic
 Ghom <- mleHomGP(X, Z, lower=lower, upper=upper, covtype=covtype,
-                known=list(beta0=0), maxit=1000) 
+                known=list(beta0=0), maxit=1000)
 
-## Heteroskedastic 
-Ghet <- mleHetGP(X, Z, lower=lower, upper=upper, covtype=covtype, 
+## Heteroskedastic
+Ghet <- mleHetGP(X, Z, lower=lower, upper=upper, covtype=covtype,
                 noiseControl=nc, settings=settings, known=list(beta0=0), maxit=1000)
 
 
@@ -76,31 +77,31 @@ ninitseq = 5
 n=nrow(X0)
 Xseq <- X[1:(ninitseq*n),]
 Y <- Z[1:(ninitseq*n)]
-mod <- mleHetGP(Xseq, Y, lower=lower, upper=upper, covtype=covtype, 
+mod <- mleHetGP(Xseq, Y, lower=lower, upper=upper, covtype=covtype,
                 noiseControl=nc, settings=settings, known=list(beta0=0), maxit=1000)
 
-nadd = nrow(X)-nrow(Xseq)  
+nadd = nrow(X)-nrow(Xseq)
 
 h <- rep(NA, nadd)
 ## acquisitions
-for(i in 1:nadd) { 
-  
+for(i in 1:nadd) {
+
   ## choose lookahead horizon and solve IMSPE
   h[i] <- horizon(mod)
   opt <- IMSPE_optim(mod, h[i], control=control)
   #cat("i=", i, ", h=", h[i], "\n", sep="")
-  
+
   ## evaluate the simulator
   ynew <- (simulator(opt$par) -Zm)/sqrt(Zv)
-  
+
   ## update the fit
   mod <- update(mod, Xnew=opt$par, Znew=ynew, ginit=mod$g*1.01)
   if(i %% 25 == 0){
     mod2 <- mleHetGP(list(X0=mod$X0, Z0=mod$Z0, mult=mod$mult),
-                     Z=mod$Z, lower=lower, upper=upper, covtype=covtype, 
-                     noiseControl=nc, settings=settings, known=list(beta0=0), 
+                     Z=mod$Z, lower=lower, upper=upper, covtype=covtype,
+                     noiseControl=nc, settings=settings, known=list(beta0=0),
                      maxit=1000)
-    if(mod2$ll > mod$ll) mod <- mod2  
+    if(mod2$ll > mod$ll) mod <- mod2
   }
 }
 seqGhet=mod
@@ -117,32 +118,35 @@ predHetseq = predict(x = testdesign, object = seqGhet)
 
 # Normalize Ztest.mean
 Ztest.mean.N = (Ztest.mean - Zm)/sqrt(Zv)
+Ztest.sd.N = Ztest.sd/sqrt(Zv)
 
-# MSE
+# MSE for mean
 msehom = mean(((predhom$mean-Ztest.mean.N))^2)
 msehet = mean(((predhet$mean-Ztest.mean.N))^2)
 msehetseq = mean(((predHetseq$mean-Ztest.mean.N))^2)
 
-# scores for the mean prediction
-schom = mean(-(Ztest.mean.N-predhom$mean)^2/(predhom$sd2) -log(predhom$sd2))
-schet = mean(-(Ztest.mean.N-predhet$mean)^2/(predhet$sd2) -log(predhet$sd2))
-schetseq = mean(-(Ztest.mean.N-predHetseq$mean)^2/(predHetseq$sd2) -log(predHetseq$sd2))
+#MSE for sd
+msehomsd = mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)
+msehetsd = mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)
+msehetseqsd = mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)
+
 
 # scores for the prediction of a single run of the simulator
 Ztest = (apply(testdesign,1,simulator)-Zm)/sqrt(Zv) # for computing scores on a single realization of the simulator
-schom2 = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
-schet2 = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
-schetseq2 = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
+schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
+schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
+schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
 
 
 ## export results
-return(c(msehom=msehom,msehet=msehet,msehetseq=msehetseq,scoremeanhom=schom,scoremeanhet=schet,scoremeanhetseq=schetseq,scorehom=schom2,scorehet=schet2,scorehetseq=schetseq2))
+return(c(msehom=msehom,msehet=msehet,msehetseq=msehetseq,msehomsd=msehomsd,msehetsd=msehetsd,msehetseqsd=msehetseqsd,scorehom=schom,scorehet=schet,scorehetseq=schetseq))
 },mc.cores=10)
 
 
 RES = Reduce(rbind,RESrep)
-colnames(RES) = c("msehom","msehet","msehetseq","scoremeanhom","scoremeanhet","scoremeanhetseq","scorehom","scorehet","scorehetseq")
+colnames(RES) = c("msehom","msehet","msehetseq","msehomsd","msehetsd","msehetseqsd","scorehom","scorehet","scorehetseq")
 rownames(RES) = 1:100
 
-write.table(RES,file="EmulationRep.csv")
+name="EmululationRep.csv"
+write.table(RES,file=name)
 
