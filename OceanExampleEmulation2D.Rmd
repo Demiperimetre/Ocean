@@ -1,7 +1,7 @@
 ---
 title: "Ocean Example"
 author: "Pierre Barbillon"
-date: "June 16, 2020"
+date: "June 29, 2020"
 output: github_document
 ---
 
@@ -199,29 +199,35 @@ predHetseq = predict(x = testdesign, object = seqGhet)
 Ztest.mean.N = (Ztest.mean - Zm)/sqrt(Zv)
 Ztest.sd.N = Ztest.sd/sqrt(Zv)
 
-# MSE for the mean
-msehom = mean(((predhom$mean-Ztest.mean.N))^2)
-msehet = mean(((predhet$mean-Ztest.mean.N))^2)
-msehetseq = mean(((predHetseq$mean-Ztest.mean.N))^2)
+# RMSE for the mean
+rmsehom = sqrt(mean(((predhom$mean-Ztest.mean.N))^2)*Zv)
+rmsehet = sqrt(mean(((predhet$mean-Ztest.mean.N))^2)*Zv)
+rmsehetseq = sqrt(mean(((predHetseq$mean-Ztest.mean.N))^2)*Zv)
 
-#MSE for sd
-msehomsd = mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)
-msehetsd = mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)
-msehetseqsd = mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)
 
 # scores for the prediction of a single run of the simulator
 Ztest = (apply(testdesign,1,simulator)-Zm)/sqrt(Zv) # for computing scores on a single realization of the simulator
-schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
-schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
-schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
+schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs) - log(Zv))
+schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs)- log(Zv))
+schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs)- log(Zv))
 ```
 
 
 We compute the mean square error and the score for a prediction of a run of the simulator.
 ```{r results}
-c(msehom=msehom,msehet=msehet,msehetseq=msehetseq)
-c(msehom=msehomsd,msehet=msehetsd,msehetseq=msehetseqsd)
+c(rmsehom=rmsehom,rmsehet=rmsehet,rmsehetseq=rmsehetseq)
+
 c(scorehom=schom,scorehet=schet,scorehetseq=schetseq)
+```
+
+
+```{r rmsesd,eval=FALSE,echo=FALSE}
+#RMSE for sd
+# rmsehomsd = sqrt(mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)*Zv)
+# rmsehetsd = sqrt(mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)*Zv)
+# rmsehetseqsd = sqrt(mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)*Zv)
+
+#c(rmsehom=rmsehomsd,rmsehet=rmsehetsd,rmsehetseq=rmsehetseqsd)
 ```
 
 
@@ -245,15 +251,9 @@ RES = read.table("EmulationRep.csv",sep=" ")
 # MSE for the mean
 MSE = melt(RES[,1:3])
 names(MSE) = c("GP","MSEmean")
-MSE$GP =revalue(MSE$GP, c("msehom"="homGP", "msehet"="hetGP","msehetseq"="seqhetGP"))
+MSE$GP =revalue(MSE$GP, c("rmsehom"="homGP", "rmsehet"="hetGP","rmsehetseq"="seqhetGP"))
 p1=ggplot(MSE,aes(x=GP,y=MSEmean))+theme_bw()+geom_boxplot()
 
-
-# MSE sd
-MSEsd = melt(RES[,4:6])
-names(MSEsd) = c("GP","MSEsd")
-MSEsd$GP =revalue(MSEsd$GP, c("msehomsd"="homGP", "msehetsd"="hetGP","msehetseqsd"="seqhetGP"))
-p2=ggplot(MSEsd,aes(x=GP,y=MSEsd))+theme_bw()+geom_boxplot()
 
 
 
@@ -263,8 +263,21 @@ names(Score) = c("GP","Score")
 Score$GP =revalue(Score$GP, c("scorehom"="homGP", "scorehet"="hetGP","scorehetseq"="seqhetGP"))
 p3=ggplot(Score,aes(x=GP,y=Score))+theme_bw()+geom_boxplot()
 
-grid.arrange(p1,p2,p3,nrow=1)
+grid.arrange(p1,p3,nrow=1)
 ```
+
+
+
+
+```{r msesd,eval=FALSE,echo=FALSE}
+# MSE sd
+MSEsd = melt(RES[,4:6])
+names(MSEsd) = c("GP","MSEsd")
+MSEsd$GP =revalue(MSEsd$GP, c("rmsehomsd"="homGP", "rmsehetsd"="hetGP","rmsehetseqsd"="seqhetGP"))
+p2=ggplot(MSEsd,aes(x=GP,y=MSEsd))+theme_bw()+geom_boxplot()
+```
+
+
 
 
 Find out which is best for MSE, and Scores
@@ -275,7 +288,6 @@ table(apply(MSE,1,which.min))
 
 Score = (RES[,7:9])
 table(apply(Score,1,which.max))
-
 ```
 
 

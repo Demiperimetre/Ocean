@@ -121,30 +121,30 @@ Ztest.mean.N = (Ztest.mean - Zm)/sqrt(Zv)
 Ztest.sd.N = Ztest.sd/sqrt(Zv)
 
 # MSE for mean
-msehom = mean(((predhom$mean-Ztest.mean.N))^2)
-msehet = mean(((predhet$mean-Ztest.mean.N))^2)
-msehetseq = mean(((predHetseq$mean-Ztest.mean.N))^2)
+rmsehom = sqrt(mean(((predhom$mean-Ztest.mean.N))^2)*Zv)
+rmsehet = sqrt(mean(((predhet$mean-Ztest.mean.N))^2)*Zv)
+rmsehetseq = sqrt(mean(((predHetseq$mean-Ztest.mean.N))^2)*Zv)
+
 
 #MSE for sd
-msehomsd = mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)
-msehetsd = mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)
-msehetseqsd = mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)
+rmsehomsd = sqrt(mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)*Zv)
+rmsehetsd = sqrt(mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)*Zv)
+rmsehetseqsd = sqrt(mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)*Zv)
 
 
 # scores for the prediction of a single run of the simulator
 Ztest = (apply(testdesign,1,simulator)-Zm)/sqrt(Zv) # for computing scores on a single realization of the simulator
-schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
-schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
-schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
-
+schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs) - log(Zv))
+schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs)- log(Zv))
+schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs)- log(Zv))
 
 ## export results
-return(c(msehom=msehom,msehet=msehet,msehetseq=msehetseq,msehomsd=msehomsd,msehetsd=msehetsd,msehetseqsd=msehetseqsd,scorehom=schom,scorehet=schet,scorehetseq=schetseq))
+return(c(rmsehom=rmsehom,rmsehet=rmsehet,rmsehetseq=rmsehetseq,rmsehomsd=rmsehomsd,rmsehetsd=rmsehetsd,rmsehetseqsd=rmsehetseqsd,scorehom=schom,scorehet=schet,scorehetseq=schetseq))
 },mc.cores=10)
 
 
 RES = Reduce(rbind,RESrep)
-colnames(RES) = c("msehom","msehet","msehetseq","msehomsd","msehetsd","msehetseqsd","scorehom","scorehet","scorehetseq")
+colnames(RES) = c("rmsehom","rmsehet","rmsehetseq","rmsehomsd","rmsehetsd","rmsehetseqsd","scorehom","scorehet","scorehetseq")
 rownames(RES) = 1:100
 
 name="EmululationRep.csv"

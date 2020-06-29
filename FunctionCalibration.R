@@ -11,6 +11,13 @@ RangeEstim = function(XF,yF,GP,u,s2)
 }
 
 
+# generate realization of a GP
+simdiscrepancy = function(X,s2d=.02,psi = c(.1,.2))
+{
+  SIG = s2d * cov_gen(X,theta=psi,type="Gaussian")
+  as.vector(rmvnorm(1,rep(0,nrow(X)),SIG))
+}
+
 # function for calibration
 #priorUpBounds2b for uniform prior on [0,priorUpBounds2b] for s2b variance discrepancy parameter 
 postcalibrationwithdisc = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=NULL,logvar=FALSE)
@@ -142,6 +149,9 @@ prednoncal = function(k,GP,vareps,loc,Ym,Yv)
   return(Zprednoncal)
 }
 
+
+
+
 # Function for prediction incorporating discrepancy and posterior sample of theta
 predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv,psi=NULL)
 {
@@ -175,6 +185,10 @@ predcal = function(k,cal,GP,vareps,loc,YfN,Xfield,Ym,Yv,psi=NULL)
   realdisc = as.vector(t(Cdiscloc) %*% solve(Cdisc,diff)) + simdiscloc
   return( (realCM[1:nloc] + realdisc)*sqrt(Yv) + Ym )
 }
+
+
+
+
 
 # Computing score from an empirical distribution
 scoreEstDens = function(Ech,v)
