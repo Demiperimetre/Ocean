@@ -1,11 +1,16 @@
 # function for initialization of the range parameters in the discrepancy
-RangeEstim = function(XF,yF,GP,u,s2)
+# rep to account for possible replications, in this case XF has to be unique location and yF must me averaged,
+# we assume that the replications are organized by concatenation of batches of data corresponding to unique location
+RangeEstim = function(XF,yF,GP,u,s2,rep=1)
 {
+  XF = unique.matrix(XF)
+  yFmat = matrix(yF,nrow=nrow(XF),ncol=rep,byrow =FALSE)
+  yF = rowMeans(yFmat)
   XFU <- cbind(XF, matrix(rep(u, nrow(XF)), ncol=length(u), byrow=TRUE)) 
   p <- predict(GP, XFU, xprime=XFU)
   C <- s2*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2 #+ diag(p$nugs)
   res = yF - p$mean
-  GPdisc = mleHomGP(X=XF,Z=res,covtype = "Gaussian",known = list(g=s2,beta0=0))
+  GPdisc = mleHomGP(X=XF,Z=res,covtype = "Gaussian",known = list(g=s2/rep,beta0=0))
   Sigdisc = cov_gen(XF,theta=u,type="Gaussian")
   return(list(psi=GPdisc$theta,sigb=GPdisc$nu_hat,Sigdisc=Sigdisc))
 }
@@ -85,8 +90,12 @@ postcalibrationwithdisc = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=N
 # function for calibration
 #priorUpBounds2b for uniform prior on [0,priorUpBounds2b] for s2b variance discrepancy parameter 
 # replicates
-postcalibrationwithdiscrep = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=NULL,logvar=FALSE)
+postcalibrationwithdiscrep = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=NULL,logvar=FALSE,rep=1)
 {
+  
+  XF = unique.matrix(XF)
+  yFmat = matrix(yF,nrow=nrow(XF),ncol=rep,byrow=FALSE)
+  yF = rowMeans(yFmat)
   
   # bound on variances 
   s2upbound = .1
@@ -134,14 +143,18 @@ postcalibrationwithdiscrep = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2
     Cdisc = s2b * cov_gen(XF,theta=thdisc,type="Gaussian")
   }
   
-  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2  +Cdisc  #discrepancy  + diag(p$nugs) # for variance of sto sim
+  C <- s2f/rep*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2  +Cdisc  #discrepancy  + diag(p$nugs) # for variance of sto sim
   
-  
+  if (rep>1)
+  {
+    varobs = sum(apply(yFmat,1,var))
+    liks2f = dchisq(varobs/s2f,(rep-1)*nrow(XF),log=TRUE) + log(s2f) 
+  }
   
   
   
   ## gaussian log density evaluation for yF under that predictive
-  return(dmvnorm(yF, p$mean, C, log=TRUE) )
+  return(dmvnorm(yF, p$mean, C, log=TRUE) + lik2sf)
 }
 
 
