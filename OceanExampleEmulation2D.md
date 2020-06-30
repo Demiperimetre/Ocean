@@ -295,9 +295,9 @@ MSE = melt(RES[,1:3])
     ## No id variables; using all as measure variables
 
 ``` r
-names(MSE) = c("GP","MSEmean")
+names(MSE) = c("GP","RMSE")
 MSE$GP =revalue(MSE$GP, c("rmsehom"="homGP", "rmsehet"="hetGP","rmsehetseq"="seqhetGP"))
-p1=ggplot(MSE,aes(x=GP,y=MSEmean))+theme_bw()+geom_boxplot()
+p1=ggplot(MSE,aes(x=GP,y=RMSE))+theme_bw()+geom_boxplot()
 
 
 

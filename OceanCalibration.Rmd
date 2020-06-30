@@ -50,6 +50,10 @@ n = nrow(Xfield)
 Ym <- mean(Yfieldnoise)
 Yv <- var(Yfieldnoise)
 YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv)
+# simulate discrancy
+Xfielduniloc = unique.matrix(Xfield)
+disc = simdiscrepancy(Xfield[,1:2])
+YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc,2)
 vareps = 2^2 
 ```
 

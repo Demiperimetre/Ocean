@@ -81,6 +81,71 @@ postcalibrationwithdisc = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=N
 
 
 
+
+# function for calibration
+#priorUpBounds2b for uniform prior on [0,priorUpBounds2b] for s2b variance discrepancy parameter 
+# replicates
+postcalibrationwithdiscrep = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2b=NULL,logvar=FALSE)
+{
+  
+  # bound on variances 
+  s2upbound = .1
+  
+  if (is.null(Sigdisc)) bRange = 1
+  else bRange = 0
+  
+  ## input processing and checking
+  if(length(theta) != (ncol(GP$X0) - ncol(XF))*(bRange+1) + 2) 
+    stop("length(theta), ncol(XF), ncol(GP$X0) mismatch")
+  u <- theta[1:ncol(XF)]
+  
+  
+  
+  if (logvar==TRUE)  
+  {
+    s2f <- exp(theta[ncol(XF)+1])
+    s2b = exp(theta[ncol(XF)+2])
+  }
+  else {
+    s2f <- theta[ncol(XF)+1]
+    s2b = theta[ncol(XF)+2]
+  }
+  
+  if (bRange==1) thdisc = theta[(ncol(XF)+3):length(theta)]
+  
+  
+  
+  
+  ## prior checking  
+  if(any(u < 0 | u > 1)) return (-Inf)
+  if(s2f < 0) return(-Inf)
+  if(s2b<0) return(-Inf)
+  if (bRange==1) {if(any(thdisc<0)) return(-Inf)}
+  if (!is.null(priorUpBounds2b)) {
+    upbound = min(priorUpBounds2b, s2upbound )
+    if (s2b>upbound) return(-Inf)}
+  if (s2f>s2upbound) return(-Inf)
+  
+  ## derive predictive distribution for XF paired with u
+  XFU <- cbind(XF, matrix(rep(u, nrow(XF)), ncol=length(u), byrow=TRUE)) 
+  p <- predict(GP, XFU, xprime=XFU)
+  
+  if (bRange==0) {Cdisc = Sigdisc * s2b} else {
+    Cdisc = s2b * cov_gen(XF,theta=thdisc,type="Gaussian")
+  }
+  
+  C <- s2f*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2  +Cdisc  #discrepancy  + diag(p$nugs) # for variance of sto sim
+  
+  
+  
+  
+  
+  ## gaussian log density evaluation for yF under that predictive
+  return(dmvnorm(yF, p$mean, C, log=TRUE) )
+}
+
+
+
 postcalibrationwithoutdisc = function(theta,XF,yF,GP,logvar=FALSE)
 {
   
