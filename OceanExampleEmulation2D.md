@@ -1,7 +1,7 @@
 Ocean Example
 ================
 Pierre Barbillon
-June 16, 2020
+June 29, 2020
 
 ``` r
 library(ggplot2)
@@ -158,8 +158,7 @@ gridhetseq$psd = gridhetseq$psd * sqrt(Zv)
 gridhetseq$nug = gridhetseq$nug * Zv
 ```
 
-Plots for
-homGP
+Plots for homGP
 
 ``` r
 ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) + scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))
@@ -173,8 +172,7 @@ ggplot(gridHom, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRU
 
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20homgp-2.png)<!-- -->
 
-Plots for
-hetGP
+Plots for hetGP
 
 ``` r
 ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) +scale_fill_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))
@@ -188,8 +186,7 @@ ggplot(gridhet, aes(long, lat)) + geom_raster(aes(fill = psd), interpolate = TRU
 
 ![](OceanExampleEmulation2D_files/figure-gfm/plot%20hetgp-2.png)<!-- -->
 
-Plots for
-SeqhetGP
+Plots for SeqhetGP
 
 ``` r
 ggplot(gridhetseq, aes(long, lat)) + geom_raster(aes(fill = mean), interpolate = TRUE) + scale_fill_gradientn(colours=matlab.like(10))
@@ -237,50 +234,38 @@ predHetseq = predict(x = testdesign, object = seqGhet)
 Ztest.mean.N = (Ztest.mean - Zm)/sqrt(Zv)
 Ztest.sd.N = Ztest.sd/sqrt(Zv)
 
-# MSE for the mean
-msehom = mean(((predhom$mean-Ztest.mean.N))^2)
-msehet = mean(((predhet$mean-Ztest.mean.N))^2)
-msehetseq = mean(((predHetseq$mean-Ztest.mean.N))^2)
+# RMSE for the mean
+rmsehom = sqrt(mean(((predhom$mean-Ztest.mean.N))^2)*Zv)
+rmsehet = sqrt(mean(((predhet$mean-Ztest.mean.N))^2)*Zv)
+rmsehetseq = sqrt(mean(((predHetseq$mean-Ztest.mean.N))^2)*Zv)
 
-#MSE for sd
-msehomsd = mean(((sqrt(predhom$nugs)-Ztest.sd.N))^2)
-msehetsd = mean(((sqrt(predhet$nugs)-Ztest.sd.N))^2)
-msehetseqsd = mean(((sqrt(predHetseq$nugs)-Ztest.sd.N))^2)
 
 # scores for the prediction of a single run of the simulator
 Ztest = (apply(testdesign,1,simulator)-Zm)/sqrt(Zv) # for computing scores on a single realization of the simulator
-schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs))
-schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs))
-schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs))
+schom = mean(-(Ztest-predhom$mean)^2/(predhom$sd2+predhom$nugs) -log(predhom$sd2+predhom$nugs) - log(Zv))
+schet = mean(-(Ztest-predhet$mean)^2/(predhet$sd2+predhet$nugs) -log(predhet$sd2+predhet$nugs)- log(Zv))
+schetseq = mean(-(Ztest-predHetseq$mean)^2/(predHetseq$sd2+predHetseq$nugs) -log(predHetseq$sd2+predHetseq$nugs)- log(Zv))
 ```
 
 We compute the mean square error and the score for a prediction of a run
 of the simulator.
 
 ``` r
-c(msehom=msehom,msehet=msehet,msehetseq=msehetseq)
+c(rmsehom=rmsehom,rmsehet=rmsehet,rmsehetseq=rmsehetseq)
 ```
 
-    ##     msehom     msehet  msehetseq 
-    ## 0.03965506 0.03695992 0.02293363
-
-``` r
-c(msehom=msehomsd,msehet=msehetsd,msehetseq=msehetseqsd)
-```
-
-    ##     msehom     msehet  msehetseq 
-    ## 0.02629828 0.01164999 0.02054881
+    ##    rmsehom    rmsehet rmsehetseq 
+    ##   2.056197   1.985094   1.563694
 
 ``` r
 c(scorehom=schom,scorehet=schet,scorehetseq=schetseq)
 ```
 
     ##    scorehom    scorehet scorehetseq 
-    ##   0.6703442   0.7890090   0.8355525
+    ##   -3.998909   -3.880244   -3.833701
 
 To check the accuracy of the emulators, we plot the mean and the sd of
-the Ocean simulator obtained from the test
-design:
+the Ocean simulator obtained from the test design:
 
 ``` r
 ggplot(test,aes(x=long,y=lat,col=m))+geom_point()+scale_color_gradientn(colours=matlab.like(10),limits=c(min(gridHom$mean,gridhet$mean),max(gridHom$mean,gridhet$mean)))+theme_bw()
@@ -311,20 +296,9 @@ MSE = melt(RES[,1:3])
 
 ``` r
 names(MSE) = c("GP","MSEmean")
-MSE$GP =revalue(MSE$GP, c("msehom"="homGP", "msehet"="hetGP","msehetseq"="seqhetGP"))
+MSE$GP =revalue(MSE$GP, c("rmsehom"="homGP", "rmsehet"="hetGP","rmsehetseq"="seqhetGP"))
 p1=ggplot(MSE,aes(x=GP,y=MSEmean))+theme_bw()+geom_boxplot()
 
-
-# MSE sd
-MSEsd = melt(RES[,4:6])
-```
-
-    ## No id variables; using all as measure variables
-
-``` r
-names(MSEsd) = c("GP","MSEsd")
-MSEsd$GP =revalue(MSEsd$GP, c("msehomsd"="homGP", "msehetsd"="hetGP","msehetseqsd"="seqhetGP"))
-p2=ggplot(MSEsd,aes(x=GP,y=MSEsd))+theme_bw()+geom_boxplot()
 
 
 
@@ -339,7 +313,7 @@ names(Score) = c("GP","Score")
 Score$GP =revalue(Score$GP, c("scorehom"="homGP", "scorehet"="hetGP","scorehetseq"="seqhetGP"))
 p3=ggplot(Score,aes(x=GP,y=Score))+theme_bw()+geom_boxplot()
 
-grid.arrange(p1,p2,p3,nrow=1)
+grid.arrange(p1,p3,nrow=1)
 ```
 
 ![](OceanExampleEmulation2D_files/figure-gfm/replications-1.png)<!-- -->
@@ -354,7 +328,7 @@ table(apply(MSE,1,which.min))
 
     ## 
     ##  1  2  3 
-    ##  4  2 94
+    ##  2  4 94
 
 ``` r
 Score = (RES[,7:9])
@@ -363,4 +337,4 @@ table(apply(Score,1,which.max))
 
     ## 
     ##  2  3 
-    ## 44 56
+    ## 42 58

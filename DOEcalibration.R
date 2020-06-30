@@ -30,6 +30,8 @@ X0 = maximinSA_LHS(X0)$design
 u1 = (700 -100)/900  
 u2 = (200- 100)/900
 Xfield = cbind(X0,u1,u2)
+# one replicate hence two field data at the same location
+Xfield = rbind(Xfield,Xfield)
 ### run the simulator
 Yfield = sapply(1:n,function(i) simulator4d(Xfield[i,],NPATHS=1200))
 ### add a Gaussian withe noise
