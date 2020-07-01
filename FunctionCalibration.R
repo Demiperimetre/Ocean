@@ -145,6 +145,9 @@ postcalibrationwithdiscrep = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2
   
   C <- s2f/rep*diag(nrow(p$cov)) + (p$cov + t(p$cov))/2  +Cdisc  #discrepancy  + diag(p$nugs) # for variance of sto sim
   
+  
+  lik2sf = 0
+  
   if (rep>1)
   {
     varobs = sum(apply(yFmat,1,var))

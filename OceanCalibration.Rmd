@@ -1,7 +1,7 @@
 ---
 title: "Calibration of the Ocean Simulator"
 author: "Pierre Barbillon"
-date: "January 17, 2020"
+date: "July 1, 2020"
 output: github_document
 ---
 
@@ -50,12 +50,17 @@ n = nrow(Xfield)
 Ym <- mean(Yfieldnoise)
 Yv <- var(Yfieldnoise)
 YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv)
-# simulate discrancy
-Xfielduniloc = unique.matrix(Xfield)
-disc = simdiscrepancy(Xfielduniloc[,1:2])
-YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc,2)
 vareps = 2^2 
 ```
+```{r disc}
+test = read.csv("testdata2D.csv",sep=" ")
+testdesign = as.matrix(test[,1:2])
+# simulate discrepancy
+Xfielduniloc = unique.matrix(Xfield)
+disc = simdiscrepancy(rbind(Xfielduniloc[,1:2],testdesign))
+YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc[1:nrow(Xfielduniloc)],2)
+```
+
 
 ## Emulators
 
@@ -117,11 +122,11 @@ Thin = 100
 
 Calibration with homGP
 ```{r homGPcalib}
-homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps)
+homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
-# calHom <- MCMCmetrop1R(postcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom,
-#                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=.5/Yv,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(.1/Yv)),
+# calHom <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom,
+#                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=NULL,rep=2,logvar=T
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 # write.table(calHom,file="calHom.csv")
 
@@ -144,13 +149,13 @@ hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) 
 
 Calibration with hetGP
 ```{r hetGPcalib}
-hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps)
+hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
-# calHet <- MCMCmetrop1R(postcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het,
-#                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=.5/Yv,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(.1/Yv)),
+# calHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het,
+#                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=NULL,rep=2,logvar=T
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
-# write.table(calHetSmDisc,file="calHet.csv")
+# write.table(calHet,file="calHet.csv")
 
 # reloading saved calibration results
 calHet = read.table("calHet.csv",h=T,sep=" ")
@@ -170,11 +175,11 @@ het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2))
 Calibration with seqhetGP
 
 ```{r seqhetGP}
-seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps)
+seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
-# calSeqHet <- MCMCmetrop1R(postcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet,
-#                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=.5/Yv,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(.1/Yv)),
+# calSeqHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet,
+#                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=NULL,rep=2,logvar=T
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 #write.table(calSeqHet,file="calSeqHet.csv")
 
@@ -204,9 +209,9 @@ grid.arrange(arrangeGrob(hom1,hom2,hom3,hom4,top="homGP",ncol=4),arrangeGrob(het
 
 Loading test data 
 ```{r functionforpred}
-test = read.csv("testdata2D.csv",sep=" ")
-testdesign = as.matrix(test[,1:2])
-Ztest.mean = test[,3]
+# test = read.csv("testdata2D.csv",sep=" ")
+# testdesign = as.matrix(test[,1:2])
+Ztest.mean = test[,3] + sqrt(Yv)*disc[-c(1:nrow(Xfielduniloc))]
 Ztest.sim = Ztest.mean + rnorm(length(Ztest.mean),0,sqrt(vareps))
 ```
 
