@@ -125,7 +125,7 @@ Calibration with homGP
 homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
 # calHom <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom,
-#                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=NULL,rep=2,logvar=T
+#                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
 #                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 # write.table(calHom,file="calHom.csv")
@@ -152,7 +152,7 @@ Calibration with hetGP
 hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
 # calHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het,
-#                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=NULL,rep=2,logvar=T
+#                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
 #                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 # write.table(calHet,file="calHet.csv")
@@ -178,7 +178,7 @@ Calibration with seqhetGP
 seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
 # calSeqHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet,
-#                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=NULL,rep=2,logvar=T
+#                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
 #                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 #write.table(calSeqHet,file="calSeqHet.csv")
