@@ -1,7 +1,7 @@
 Calibration of the Ocean Simulator
 ================
 Pierre Barbillon
-January 17, 2020
+July 1, 2020
 
 ``` r
 rm(list=ls())
@@ -45,6 +45,21 @@ Ym <- mean(Yfieldnoise)
 Yv <- var(Yfieldnoise)
 YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv)
 vareps = 2^2 
+```
+
+Simulate discrepancy field
+
+``` r
+test = read.csv("testdata2D.csv",sep=" ")
+testdesign = as.matrix(test[,1:2])
+# simulate discrepancy
+Xfielduniloc = unique.matrix(Xfield)
+# simulate discrepancy and add it to field data
+#disc = simdiscrepancy(rbind(Xfielduniloc[,1:2],testdesign))
+#YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc[1:nrow(Xfielduniloc)],2)
+# or reload it
+disc = read.table("discrepancy.csv")[,1]
+YfieldnoiseN = read.table("noisyfielddata.csv")[,1]
 ```
 
 ## Emulators
@@ -98,8 +113,7 @@ Settings for MCMC
 nMCMC = 1e5  #1e6
 nburnin =  2e4 
 # variance for random walks
-Vrw0 <- diag(c(.05, .05, .1)) 
-Vrw <- diag(c(.05,.05,.1,.1))
+Vrw <- diag(c(.05,.05,.1,.1))/2
 Uprior =c(.5,.5)
 Thin = 100
 ```
@@ -107,11 +121,11 @@ Thin = 100
 Calibration with homGP
 
 ``` r
-homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps)
+homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
-# calHom <- MCMCmetrop1R(postcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom,
-#                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=.5/Yv,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(.1/Yv)),
+# calHom <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom,
+#                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(2/Yv),log(2/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 # write.table(calHom,file="calHom.csv")
 
@@ -127,19 +141,19 @@ dfcalhom[,4] = exp(dfcalhom[,4]) * Yv
 hom1 = ggplot(dfcalhom,aes(x=u1,stat(density)))+ xlab(expression(K[x])) + geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
 hom2 = ggplot(dfcalhom,aes(x=u2,stat(density))) + xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
 hom3 = ggplot(dfcalhom,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2))  + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,2) 
+hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 Calibration with hetGP
 
 ``` r
-hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps)
+hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
-# calHet <- MCMCmetrop1R(postcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het,
-#                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=.5/Yv,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(.1/Yv)),
+# calHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het,
+#                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(2/Yv),log(2/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
-# write.table(calHetSmDisc,file="calHet.csv")
+# write.table(calHet,file="calHet.csv")
 
 # reloading saved calibration results
 calHet = read.table("calHet.csv",h=T,sep=" ")
@@ -152,18 +166,17 @@ dfcalhet[,4] = exp(dfcalhet[,4]) * Yv
 het1 = ggplot(dfcalhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
 het2 = ggplot(dfcalhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
 het3 = ggplot(dfcalhet,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2)) + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,2) 
+het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
-Calibration with
-seqhetGP
+Calibration with seqhetGP
 
 ``` r
-seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps)
+seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
-# calSeqHet <- MCMCmetrop1R(postcalibrationwithdisc, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet,
-#                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=.5/Yv,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(.1/Yv)),
+# calSeqHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet,
+#                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(2/Yv),log(2/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 #write.table(calSeqHet,file="calSeqHet.csv")
 
@@ -178,7 +191,7 @@ dfcalseqhet[,4] = exp(dfcalseqhet[,4]) * Yv
 seqhet1 = ggplot(dfcalseqhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
 seqhet2 = ggplot(dfcalseqhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
 seqhet3 = ggplot(dfcalseqhet,aes(x=s2f,stat(density))) + xlab(expression(sigma[epsilon]^2))+ geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,2) 
+seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 ``` r
@@ -186,11 +199,11 @@ grid.arrange(arrangeGrob(hom1,hom2,hom3,hom4,top="homGP",ncol=4),arrangeGrob(het
              arrangeGrob(seqhet1,seqhet2,seqhet3,seqhet4,top="seq hetGP",ncol=4),nrow=3,ncol=1)
 ```
 
-    ## Warning: Removed 1 rows containing non-finite values (stat_density).
+    ## Warning: Removed 16 rows containing non-finite values (stat_density).
 
-    ## Warning: Removed 8 rows containing non-finite values (stat_density).
+    ## Warning: Removed 44 rows containing non-finite values (stat_density).
 
-    ## Warning: Removed 64 rows containing non-finite values (stat_density).
+    ## Warning: Removed 27 rows containing non-finite values (stat_density).
 
 ![](OceanCalibration_files/figure-gfm/plotcalib-1.png)<!-- -->
 
@@ -199,9 +212,9 @@ grid.arrange(arrangeGrob(hom1,hom2,hom3,hom4,top="homGP",ncol=4),arrangeGrob(het
 Loading test data
 
 ``` r
-test = read.csv("testdata2D.csv",sep=" ")
-testdesign = as.matrix(test[,1:2])
-Ztest.mean = test[,3]
+# test = read.csv("testdata2D.csv",sep=" ")
+# testdesign = as.matrix(test[,1:2])
+Ztest.mean = test[,3] + sqrt(Yv)*disc[-c(1:nrow(Xfielduniloc))]
 Ztest.sim = Ztest.mean + rnorm(length(Ztest.mean),0,sqrt(vareps))
 ```
 
@@ -379,12 +392,12 @@ for (k in 1:nlocplot){
 ### MSEs and scores
 
 ``` r
-MSEhomnoncal = mean((rowMeans(ZpredhomGPnoncal)-Ztest.mean)^2)
-MSEhomcal = mean((rowMeans(ZpredhomGPcal)-Ztest.mean)^2)
-MSEhetnoncal = mean((rowMeans(ZpredhetGPnoncal)-Ztest.mean)^2)
-MSEhetcal = mean((rowMeans(ZpredhetGPcal)-Ztest.mean)^2)
-MSEseqhetnoncal = mean((rowMeans(ZpredseqhetGPnoncal)-Ztest.mean)^2)
-MSEseqhetcal = mean((rowMeans(ZpredseqhetGPcal)-Ztest.mean)^2)
+RMSEhomnoncal = sqrt(mean((rowMeans(ZpredhomGPnoncal)-Ztest.mean)^2))
+RMSEhomcal = sqrt(mean((rowMeans(ZpredhomGPcal)-Ztest.mean)^2))
+RMSEhetnoncal = sqrt(mean((rowMeans(ZpredhetGPnoncal)-Ztest.mean)^2))
+RMSEhetcal = sqrt(mean((rowMeans(ZpredhetGPcal)-Ztest.mean)^2))
+RMSEseqhetnoncal = sqrt(mean((rowMeans(ZpredseqhetGPnoncal)-Ztest.mean)^2))
+RMSEseqhetcal = sqrt(mean((rowMeans(ZpredseqhetGPcal)-Ztest.mean)^2))
 ```
 
 ``` r
@@ -401,8 +414,7 @@ Scoreseqhetcal = scoreEstDens(ZpredseqhetGPcal,Ztest.sim)
 We try other three other calibrations from L2 minimization, and two
 guesses (a good and a bad one) for the calibration parameter.
 
-SS minimizer for
-homGP
+SS minimizer for homGP
 
 ``` r
 L2minhom = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=hom,XF=Xfield[,1:2],yF=YfieldnoiseN)
@@ -415,22 +427,21 @@ L2minhom = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=hom,XF=Xfield[,1:2],yF
 L2minhom$par* 900 +100
 ```
 
-    ## [1] 600.8131 244.0772
+    ## [1] 1000.0000  318.0109
 
 ``` r
 L2minhom$value
 ```
 
-    ## [1] 9.373462
+    ## [1] 25.6542
 
 ``` r
 SumOfSquares((c(700,200)-100)/900,hom,Xfield[,1:2],YfieldnoiseN)
 ```
 
-    ## [1] 9.619083
+    ## [1] 27.93046
 
-SS minimizer for
-hetGP
+SS minimizer for hetGP
 
 ``` r
 L2minhet = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=het,XF=Xfield[,1:2],yF=YfieldnoiseN)
@@ -443,22 +454,21 @@ L2minhet = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=het,XF=Xfield[,1:2],yF
 L2minhet$par* 900 +100
 ```
 
-    ## [1] 527.0052 233.6657
+    ## [1] 1000.00  337.22
 
 ``` r
 L2minhet$value
 ```
 
-    ## [1] 10.23152
+    ## [1] 26.48761
 
 ``` r
 SumOfSquares((c(700,200)-100)/900,het,Xfield[,1:2],YfieldnoiseN)
 ```
 
-    ## [1] 10.54336
+    ## [1] 28.55229
 
-SS minimizer for
-seqhetGP
+SS minimizer for seqhetGP
 
 ``` r
 L2minseqhet = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=seqhet,XF=Xfield[,1:2],yF=YfieldnoiseN)
@@ -471,29 +481,28 @@ L2minseqhet = optim(c(.5,.5),SumOfSquares,lower=0,upper=1,GP=seqhet,XF=Xfield[,1
 L2minseqhet$par* 900 +100
 ```
 
-    ## [1] 613.9772 247.8322
+    ## [1] 605.2122 283.5692
 
 ``` r
 L2minseqhet$value
 ```
 
-    ## [1] 11.13717
+    ## [1] 28.25017
 
 ``` r
 SumOfSquares((c(700,200)-100)/900,seqhet,Xfield[,1:2],YfieldnoiseN)
 ```
 
-    ## [1] 11.43738
+    ## [1] 29.72664
 
 We propose a “good guess” and a “bad guess”.
 
 ``` r
 goodguess = (c(750, 215) -100)/900 
-badguess = (c(400,500) -100)/900
+badguess = (c(200,600) -100)/900
 ```
 
-Prediction for
-homGP
+Prediction for homGP
 
 ``` r
 ZpredhomGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=hom,u=L2minhom$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
@@ -504,8 +513,7 @@ ZpredhomGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=badguess,va
 ZpredhomGPnoncalbadguess = Reduce(rbind,ZpredhomGPnoncalbadguess)
 ```
 
-Prediction for
-hetGP
+Prediction for hetGP
 
 ``` r
 ZpredhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=het,u=L2minhet$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
@@ -516,8 +524,7 @@ ZpredhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=het,u=badguess,va
 ZpredhetGPnoncalbadguess = Reduce(rbind,ZpredhetGPnoncalbadguess)
 ```
 
-Prediction for
-seqhetGP
+Prediction for seqhetGP
 
 ``` r
 ZpredseqhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=L2minseqhet$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
@@ -529,32 +536,31 @@ ZpredseqhetGPnoncalbadguess = Reduce(rbind,ZpredseqhetGPnoncalbadguess)
 ```
 
 ``` r
-MSEhomnoncalL2 = mean((rowMeans(ZpredhomGPnoncalL2)-Ztest.mean)^2)
-MSEhomnoncalgoodguess = mean((rowMeans(ZpredhomGPnoncalgoodguess)-Ztest.mean)^2)
-MSEhomnoncalbadguess = mean((rowMeans(ZpredhomGPnoncalbadguess)-Ztest.mean)^2)
-MSEhetnoncalL2 = mean((rowMeans(ZpredhetGPnoncalL2)-Ztest.mean)^2)
-MSEhetnoncalgoodguess = mean((rowMeans(ZpredhetGPnoncalgoodguess)-Ztest.mean)^2)
-MSEhetnoncalbadguess = mean((rowMeans(ZpredhetGPnoncalbadguess)-Ztest.mean)^2)
-MSEseqhetnoncalL2 = mean((rowMeans(ZpredseqhetGPnoncalL2)-Ztest.mean)^2)
-MSEseqhetnoncalgoodguess = mean((rowMeans(ZpredseqhetGPnoncalgoodguess)-Ztest.mean)^2)
-MSEseqhetnoncalbadguess = mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean)^2)
+RMSEhomnoncalL2 = sqrt(mean((rowMeans(ZpredhomGPnoncalL2)-Ztest.mean)^2))
+RMSEhomnoncalgoodguess = sqrt(mean((rowMeans(ZpredhomGPnoncalgoodguess)-Ztest.mean)^2))
+RMSEhomnoncalbadguess = sqrt(mean((rowMeans(ZpredhomGPnoncalbadguess)-Ztest.mean)^2))
+RMSEhetnoncalL2 = sqrt(mean((rowMeans(ZpredhetGPnoncalL2)-Ztest.mean)^2))
+RMSEhetnoncalgoodguess = sqrt(mean((rowMeans(ZpredhetGPnoncalgoodguess)-Ztest.mean)^2))
+RMSEhetnoncalbadguess = sqrt(mean((rowMeans(ZpredhetGPnoncalbadguess)-Ztest.mean)^2))
+RMSEseqhetnoncalL2 = sqrt(mean((rowMeans(ZpredseqhetGPnoncalL2)-Ztest.mean)^2))
+RMSEseqhetnoncalgoodguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalgoodguess)-Ztest.mean)^2))
+RMSEseqhetnoncalbadguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean)^2))
 ```
 
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP 1st column
 for L2 estimate, 2nd column for bad guess, 3rd column for good guess,
-4th for unif prior, 5th post
-calibration
+4th for unif prior, 5th post calibration
 
 ``` r
-rbind(c(MSEhomnoncalL2,MSEhomnoncalbadguess,MSEhomnoncalgoodguess,MSEhomnoncal,MSEhomcal),
-      c(MSEhetnoncalL2,MSEhetnoncalbadguess,MSEhetnoncalgoodguess,MSEhetnoncal,MSEhetcal),
-      c(MSEseqhetnoncalL2,MSEseqhetnoncalbadguess,MSEseqhetnoncalgoodguess,MSEseqhetnoncal,MSEseqhetcal))
+rbind(c(RMSEhomnoncalL2,RMSEhomnoncalbadguess,RMSEhomnoncalgoodguess,RMSEhomnoncal,RMSEhomcal),
+      c(RMSEhetnoncalL2,RMSEhetnoncalbadguess,RMSEhetnoncalgoodguess,RMSEhetnoncal,RMSEhetcal),
+      c(RMSEseqhetnoncalL2,RMSEseqhetnoncalbadguess,RMSEseqhetnoncalgoodguess,RMSEseqhetnoncal,RMSEseqhetcal))
 ```
 
     ##          [,1]     [,2]     [,3]     [,4]     [,5]
-    ## [1,] 83.97062 85.43576 83.88119 84.84711 83.89629
-    ## [2,] 83.98222 85.51368 83.95764 85.93009 84.07385
-    ## [3,] 83.88084 85.50284 83.91369 85.52711 83.80031
+    ## [1,] 9.244333 9.338416 9.246637 9.303135 9.244512
+    ## [2,] 9.247127 9.352167 9.252128 9.325061 9.239035
+    ## [3,] 9.239578 9.356559 9.251953 9.290245 9.245038
 
 ``` r
 ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.sim)
@@ -570,8 +576,7 @@ Scoreseqhetnoncalgoodguess = scoreEstDens(ZpredseqhetGPnoncalgoodguess,Ztest.sim
 
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP 1st column
 for L2 estimate, 2nd column for bad guess, 3rd column for good guess,
-4th for unif prior, 5th post
-calibration
+4th for unif prior, 5th post calibration
 
 ``` r
 rbind(c(ScorehomnoncalL2,Scorehomnoncalbadguess,Scorehomnoncalgoodguess,Scorehomnoncal,Scorehomcal),
@@ -580,11 +585,13 @@ rbind(c(ScorehomnoncalL2,Scorehomnoncalbadguess,Scorehomnoncalgoodguess,Scorehom
 ```
 
     ##           [,1]      [,2]      [,3]      [,4]      [,5]
-    ## [1,] -2.342108 -3.160806 -2.339245 -2.498532 -2.329667
-    ## [2,] -2.392150      -Inf -2.366686 -2.509723 -2.353821
-    ## [3,] -2.372010 -3.130177 -2.363732 -2.500672 -2.339425
+    ## [1,] -2.655429 -3.605982 -2.640154 -2.694576 -2.334756
+    ## [2,] -2.646136 -3.664159 -2.704185 -2.696873 -2.351505
+    ## [3,] -2.740549 -3.604130 -2.823942 -2.739051 -2.317552
 
-``` r
+<!--
+
+```r
 VarPredhomnoncal = mean(apply(ZpredhomGPnoncal,1,var))
 VarPredhomcal = mean(apply(ZpredhomGPcal,1,var))
 VarPredhetnoncal = mean(apply(ZpredhetGPnoncal,1,var))
@@ -602,18 +609,21 @@ VarPredseqhetnoncalgoodguess = mean(apply(ZpredseqhetGPnoncalgoodguess,1,var))
 VarPredseqhetnoncalbadguess = mean(apply(ZpredseqhetGPnoncalbadguess,1,var))
 ```
 
-1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP 1st column
-for L2 estimate, 2nd column for bad guess, 3rd column for good guess,
-4th for unif prior, 5th post
-calibration
 
-``` r
+1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP
+1st column for L2 estimate, 2nd column for bad guess, 3rd column for good guess, 4th for unif prior, 5th post calibration
+
+```r
 rbind(c(VarPredhomnoncalL2,VarPredhomnoncalbadguess,VarPredhomnoncalgoodguess,VarPredhomnoncal,VarPredhomcal),
       c(VarPredhetnoncalL2,VarPredhetnoncalbadguess,VarPredhetnoncalgoodguess,VarPredhetnoncal,VarPredhetcal),
       c(VarPredseqhetnoncalL2,VarPredseqhetnoncalbadguess,VarPredseqhetnoncalgoodguess,VarPredseqhetnoncal,VarPredseqhetcal))
 ```
 
-    ##          [,1]     [,2]     [,3]     [,4]     [,5]
-    ## [1,] 81.77566 76.93725 82.54157 76.98576 82.35174
-    ## [2,] 80.15623 76.73324 80.03039 77.00940 81.17333
-    ## [3,] 84.28415 79.01156 85.16288 80.79259 86.06380
+```
+##          [,1]     [,2]     [,3]     [,4]     [,5]
+## [1,] 80.63582 75.35902 82.53045 76.73996 86.44405
+## [2,] 77.27884 76.81310 80.46505 77.04646 86.14737
+## [3,] 82.82664 79.22142 85.34760 80.69367 88.49830
+```
+
+-->

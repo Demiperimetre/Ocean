@@ -278,7 +278,7 @@ scoreEstDens = function(Ech,v)
   for (k in 1:ncol(Ech))
   {
     estd = density(Ech[,k],from=min(v),to=max(v))
-    vscore[k] = log(approx(estd$x,estd$y,xout=v[k])$y)
+    vscore[k] = log(max(1e-20,approx(estd$x,estd$y,xout=v[k])$y))
   }
   return(mean(vscore))
 }

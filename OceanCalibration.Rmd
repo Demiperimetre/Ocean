@@ -52,13 +52,19 @@ Yv <- var(Yfieldnoise)
 YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv)
 vareps = 2^2 
 ```
+
+Simulate discrepancy field
 ```{r disc}
 test = read.csv("testdata2D.csv",sep=" ")
 testdesign = as.matrix(test[,1:2])
 # simulate discrepancy
 Xfielduniloc = unique.matrix(Xfield)
-disc = simdiscrepancy(rbind(Xfielduniloc[,1:2],testdesign))
-YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc[1:nrow(Xfielduniloc)],2)
+# simulate discrepancy and add it to field data
+#disc = simdiscrepancy(rbind(Xfielduniloc[,1:2],testdesign))
+#YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc[1:nrow(Xfielduniloc)],2)
+# or reload it
+disc = read.table("discrepancy.csv")[,1]
+YfieldnoiseN = read.table("noisyfielddata.csv")[,1]
 ```
 
 
@@ -114,8 +120,7 @@ Settings for MCMC
 nMCMC = 1e5  #1e6
 nburnin =  2e4 
 # variance for random walks
-Vrw0 <- diag(c(.05, .05, .1)) 
-Vrw <- diag(c(.05,.05,.1,.1))
+Vrw <- diag(c(.05,.05,.1,.1))/2
 Uprior =c(.5,.5)
 Thin = 100
 ```
@@ -126,7 +131,7 @@ homMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,hom,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
 # calHom <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=hom,
 #                        Sigdisc=homMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(2/Yv),log(2/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 # write.table(calHom,file="calHom.csv")
 
@@ -142,7 +147,7 @@ dfcalhom[,4] = exp(dfcalhom[,4]) * Yv
 hom1 = ggplot(dfcalhom,aes(x=u1,stat(density)))+ xlab(expression(K[x])) + geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
 hom2 = ggplot(dfcalhom,aes(x=u2,stat(density))) + xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
 hom3 = ggplot(dfcalhom,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2))  + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,2) 
+hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 
@@ -153,7 +158,7 @@ hetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,het,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
 # calHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=het,
 #                              Sigdisc=hetMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(2/Yv),log(2/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 # write.table(calHet,file="calHet.csv")
 
@@ -168,7 +173,7 @@ dfcalhet[,4] = exp(dfcalhet[,4]) * Yv
 het1 = ggplot(dfcalhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
 het2 = ggplot(dfcalhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
 het3 = ggplot(dfcalhet,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2)) + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,2) 
+het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 
@@ -179,7 +184,7 @@ seqhetMLEdisc = RangeEstim(Xfield[,1:2],YfieldnoiseN,seqhet,Uprior,vareps,rep=2)
 # Run MH algo for calibration is time consuming
 # calSeqHet <- MCMCmetrop1R(postcalibrationwithdiscrep, XF=Xfield[,1:2], yF=YfieldnoiseN, GP=seqhet,
 #                                 Sigdisc=seqhetMLEdisc$Sigdisc,priorUpBounds2b=3/Yv,rep=2,logvar=T
-#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(1/Yv),log(1/Yv)),
+#                              ,logfun=TRUE, theta.init=c(0.5,0.5,log(2/Yv),log(2/Yv)),
 #                              burnin=nburnin, mcmc=nMCMC,V=Vrw,thin=Thin)
 #write.table(calSeqHet,file="calSeqHet.csv")
 
@@ -194,7 +199,7 @@ dfcalseqhet[,4] = exp(dfcalseqhet[,4]) * Yv
 seqhet1 = ggplot(dfcalseqhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
 seqhet2 = ggplot(dfcalseqhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
 seqhet3 = ggplot(dfcalseqhet,aes(x=s2f,stat(density))) + xlab(expression(sigma[epsilon]^2))+ geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,2) 
+seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 
@@ -275,12 +280,12 @@ for (k in 1:nlocplot){
 
 
 ```{r mse}
-MSEhomnoncal = mean((rowMeans(ZpredhomGPnoncal)-Ztest.mean)^2)
-MSEhomcal = mean((rowMeans(ZpredhomGPcal)-Ztest.mean)^2)
-MSEhetnoncal = mean((rowMeans(ZpredhetGPnoncal)-Ztest.mean)^2)
-MSEhetcal = mean((rowMeans(ZpredhetGPcal)-Ztest.mean)^2)
-MSEseqhetnoncal = mean((rowMeans(ZpredseqhetGPnoncal)-Ztest.mean)^2)
-MSEseqhetcal = mean((rowMeans(ZpredseqhetGPcal)-Ztest.mean)^2)
+RMSEhomnoncal = sqrt(mean((rowMeans(ZpredhomGPnoncal)-Ztest.mean)^2))
+RMSEhomcal = sqrt(mean((rowMeans(ZpredhomGPcal)-Ztest.mean)^2))
+RMSEhetnoncal = sqrt(mean((rowMeans(ZpredhetGPnoncal)-Ztest.mean)^2))
+RMSEhetcal = sqrt(mean((rowMeans(ZpredhetGPcal)-Ztest.mean)^2))
+RMSEseqhetnoncal = sqrt(mean((rowMeans(ZpredseqhetGPnoncal)-Ztest.mean)^2))
+RMSEseqhetcal = sqrt(mean((rowMeans(ZpredseqhetGPcal)-Ztest.mean)^2))
 ```
 
 ```{r scores}
@@ -331,7 +336,7 @@ We propose a "good guess" and a "bad guess".
 
 ```{r goodbadguesses}
 goodguess = (c(750, 215) -100)/900 
-badguess = (c(400,500) -100)/900
+badguess = (c(200,600) -100)/900
 ```
 
 
@@ -374,15 +379,15 @@ ZpredseqhetGPnoncalbadguess = Reduce(rbind,ZpredseqhetGPnoncalbadguess)
 
 
 ```{r RMSEprecalib}
-MSEhomnoncalL2 = mean((rowMeans(ZpredhomGPnoncalL2)-Ztest.mean)^2)
-MSEhomnoncalgoodguess = mean((rowMeans(ZpredhomGPnoncalgoodguess)-Ztest.mean)^2)
-MSEhomnoncalbadguess = mean((rowMeans(ZpredhomGPnoncalbadguess)-Ztest.mean)^2)
-MSEhetnoncalL2 = mean((rowMeans(ZpredhetGPnoncalL2)-Ztest.mean)^2)
-MSEhetnoncalgoodguess = mean((rowMeans(ZpredhetGPnoncalgoodguess)-Ztest.mean)^2)
-MSEhetnoncalbadguess = mean((rowMeans(ZpredhetGPnoncalbadguess)-Ztest.mean)^2)
-MSEseqhetnoncalL2 = mean((rowMeans(ZpredseqhetGPnoncalL2)-Ztest.mean)^2)
-MSEseqhetnoncalgoodguess = mean((rowMeans(ZpredseqhetGPnoncalgoodguess)-Ztest.mean)^2)
-MSEseqhetnoncalbadguess = mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean)^2)
+RMSEhomnoncalL2 = sqrt(mean((rowMeans(ZpredhomGPnoncalL2)-Ztest.mean)^2))
+RMSEhomnoncalgoodguess = sqrt(mean((rowMeans(ZpredhomGPnoncalgoodguess)-Ztest.mean)^2))
+RMSEhomnoncalbadguess = sqrt(mean((rowMeans(ZpredhomGPnoncalbadguess)-Ztest.mean)^2))
+RMSEhetnoncalL2 = sqrt(mean((rowMeans(ZpredhetGPnoncalL2)-Ztest.mean)^2))
+RMSEhetnoncalgoodguess = sqrt(mean((rowMeans(ZpredhetGPnoncalgoodguess)-Ztest.mean)^2))
+RMSEhetnoncalbadguess = sqrt(mean((rowMeans(ZpredhetGPnoncalbadguess)-Ztest.mean)^2))
+RMSEseqhetnoncalL2 = sqrt(mean((rowMeans(ZpredseqhetGPnoncalL2)-Ztest.mean)^2))
+RMSEseqhetnoncalgoodguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalgoodguess)-Ztest.mean)^2))
+RMSEseqhetnoncalbadguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean)^2))
 ```
 
 
@@ -390,9 +395,9 @@ MSEseqhetnoncalbadguess = mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP
 1st column for L2 estimate, 2nd column for bad guess, 3rd column for good guess, 4th for unif prior, 5th post calibration
 ```{r displayfullRMSE}
-rbind(c(MSEhomnoncalL2,MSEhomnoncalbadguess,MSEhomnoncalgoodguess,MSEhomnoncal,MSEhomcal),
-      c(MSEhetnoncalL2,MSEhetnoncalbadguess,MSEhetnoncalgoodguess,MSEhetnoncal,MSEhetcal),
-      c(MSEseqhetnoncalL2,MSEseqhetnoncalbadguess,MSEseqhetnoncalgoodguess,MSEseqhetnoncal,MSEseqhetcal))
+rbind(c(RMSEhomnoncalL2,RMSEhomnoncalbadguess,RMSEhomnoncalgoodguess,RMSEhomnoncal,RMSEhomcal),
+      c(RMSEhetnoncalL2,RMSEhetnoncalbadguess,RMSEhetnoncalgoodguess,RMSEhetnoncal,RMSEhetcal),
+      c(RMSEseqhetnoncalL2,RMSEseqhetnoncalbadguess,RMSEseqhetnoncalgoodguess,RMSEseqhetnoncal,RMSEseqhetcal))
 ```
 
 
@@ -418,7 +423,7 @@ rbind(c(ScorehomnoncalL2,Scorehomnoncalbadguess,Scorehomnoncalgoodguess,Scorehom
       c(ScoreseqhetnoncalL2,Scoreseqhetnoncalbadguess,Scoreseqhetnoncalgoodguess,Scoreseqhetnoncal,Scoreseqhetcal))
 ```
 
-
+<!--
 ```{r var of predictions}
 VarPredhomnoncal = mean(apply(ZpredhomGPnoncal,1,var))
 VarPredhomcal = mean(apply(ZpredhomGPcal,1,var))
@@ -445,4 +450,9 @@ rbind(c(VarPredhomnoncalL2,VarPredhomnoncalbadguess,VarPredhomnoncalgoodguess,Va
       c(VarPredhetnoncalL2,VarPredhetnoncalbadguess,VarPredhetnoncalgoodguess,VarPredhetnoncal,VarPredhetcal),
       c(VarPredseqhetnoncalL2,VarPredseqhetnoncalbadguess,VarPredseqhetnoncalgoodguess,VarPredseqhetnoncal,VarPredseqhetcal))
 ```
+
+-->
+
+
+
 
