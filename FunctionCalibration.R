@@ -150,7 +150,7 @@ postcalibrationwithdiscrep = function(theta,XF,yF,GP,Sigdisc=NULL,priorUpBounds2
   
   if (rep>1)
   {
-    varobs = sum(apply(yFmat,1,var))
+    varobs = sum(apply(yFmat,1,var)*(rep-1))
     liks2f = dchisq(varobs/s2f,(rep-1)*nrow(XF),log=TRUE) + log(s2f) 
   }
   
