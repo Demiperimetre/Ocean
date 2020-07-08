@@ -60,7 +60,7 @@ testdesign = as.matrix(test[,1:2])
 # simulate discrepancy
 Xfielduniloc = unique.matrix(Xfield)
 # simulate discrepancy and add it to field data
-#disc = simdiscrepancy(rbind(Xfielduniloc[,1:2],testdesign))
+#disc = simdiscrepancy(rbind(Xfielduniloc[,1:2],testdesign),psi=c(1,2))
 #YfieldnoiseN <- (Yfieldnoise-Ym)/sqrt(Yv) + rep(disc[1:nrow(Xfielduniloc)],2)
 # or reload it
 disc = read.table("discrepancy.csv")[,1]
@@ -303,7 +303,7 @@ Scoreseqhetcal = scoreEstDens(ZpredseqhetGPcal,Ztest.sim)
 ## Other pre-calibration
 
 
-We try other three other calibrations from L2 minimization, and two guesses (a good and a bad one) for the calibration parameter.
+We try other three other calibrations from L2 minimization, and a guess for the calibration parameter.
 
 
 SS minimizer for homGP
@@ -332,11 +332,10 @@ SumOfSquares((c(700,200)-100)/900,seqhet,Xfield[,1:2],YfieldnoiseN)
 ```
 
 
-We propose a "good guess" and a "bad guess". 
+We propose a guess. 
 
 ```{r goodbadguesses}
-goodguess = (c(750, 215) -100)/900 
-badguess = (c(200,600) -100)/900
+guess = (c(600, 300) -100)/900 
 ```
 
 
@@ -345,10 +344,8 @@ Prediction for homGP
 ```{r predhomfixed}
 ZpredhomGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=hom,u=L2minhom$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhomGPnoncalL2 = Reduce(rbind,ZpredhomGPnoncalL2)
-ZpredhomGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=goodguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
-ZpredhomGPnoncalgoodguess = Reduce(rbind,ZpredhomGPnoncalgoodguess)
-ZpredhomGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=badguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
-ZpredhomGPnoncalbadguess = Reduce(rbind,ZpredhomGPnoncalbadguess)
+ZpredhomGPnoncalguess = mclapply(1:npred,prednoncalfixed,GP=hom,u=guess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
+ZpredhomGPnoncalguess = Reduce(rbind,ZpredhomGPnoncalguess)
 ```
 
 
@@ -357,10 +354,8 @@ Prediction for hetGP
 ```{r predhetfixed}
 ZpredhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=het,u=L2minhet$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredhetGPnoncalL2 = Reduce(rbind,ZpredhetGPnoncalL2)
-ZpredhetGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=het,u=goodguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
-ZpredhetGPnoncalgoodguess = Reduce(rbind,ZpredhetGPnoncalgoodguess)
-ZpredhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=het,u=badguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
-ZpredhetGPnoncalbadguess = Reduce(rbind,ZpredhetGPnoncalbadguess)
+ZpredhetGPnoncalguess = mclapply(1:npred,prednoncalfixed,GP=het,u=guess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
+ZpredhetGPnoncalguess = Reduce(rbind,ZpredhetGPnoncalguess)
 ```
 
 
@@ -369,10 +364,8 @@ Prediction for seqhetGP
 ```{r predseqhetfixed}
 ZpredseqhetGPnoncalL2 = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=L2minseqhet$par,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
 ZpredseqhetGPnoncalL2 = Reduce(rbind,ZpredseqhetGPnoncalL2)
-ZpredseqhetGPnoncalgoodguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=goodguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
-ZpredseqhetGPnoncalgoodguess = Reduce(rbind,ZpredseqhetGPnoncalgoodguess)
-ZpredseqhetGPnoncalbadguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=badguess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
-ZpredseqhetGPnoncalbadguess = Reduce(rbind,ZpredseqhetGPnoncalbadguess)
+ZpredseqhetGPnoncalguess = mclapply(1:npred,prednoncalfixed,GP=seqhet,u=guess,vareps=vareps,Ym=Ym,Yv=Yv,loc=testdesign,mc.cores = 8)
+ZpredseqhetGPnoncalguess = Reduce(rbind,ZpredseqhetGPnoncalguess)
 ```
 
 
@@ -380,79 +373,39 @@ ZpredseqhetGPnoncalbadguess = Reduce(rbind,ZpredseqhetGPnoncalbadguess)
 
 ```{r RMSEprecalib}
 RMSEhomnoncalL2 = sqrt(mean((rowMeans(ZpredhomGPnoncalL2)-Ztest.mean)^2))
-RMSEhomnoncalgoodguess = sqrt(mean((rowMeans(ZpredhomGPnoncalgoodguess)-Ztest.mean)^2))
-RMSEhomnoncalbadguess = sqrt(mean((rowMeans(ZpredhomGPnoncalbadguess)-Ztest.mean)^2))
+RMSEhomnoncalguess = sqrt(mean((rowMeans(ZpredhomGPnoncalguess)-Ztest.mean)^2))
 RMSEhetnoncalL2 = sqrt(mean((rowMeans(ZpredhetGPnoncalL2)-Ztest.mean)^2))
-RMSEhetnoncalgoodguess = sqrt(mean((rowMeans(ZpredhetGPnoncalgoodguess)-Ztest.mean)^2))
-RMSEhetnoncalbadguess = sqrt(mean((rowMeans(ZpredhetGPnoncalbadguess)-Ztest.mean)^2))
+RMSEhetnoncalguess = sqrt(mean((rowMeans(ZpredhetGPnoncalguess)-Ztest.mean)^2))
 RMSEseqhetnoncalL2 = sqrt(mean((rowMeans(ZpredseqhetGPnoncalL2)-Ztest.mean)^2))
-RMSEseqhetnoncalgoodguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalgoodguess)-Ztest.mean)^2))
-RMSEseqhetnoncalbadguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalbadguess)-Ztest.mean)^2))
+RMSEseqhetnoncalguess = sqrt(mean((rowMeans(ZpredseqhetGPnoncalguess)-Ztest.mean)^2))
 ```
 
 
 
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP
-1st column for L2 estimate, 2nd column for bad guess, 3rd column for good guess, 4th for unif prior, 5th post calibration
+1st column for L2 estimate, 2nd column for guess, 3rd column for unif prior, 4th post calibration
 ```{r displayfullRMSE}
-rbind(c(RMSEhomnoncalL2,RMSEhomnoncalbadguess,RMSEhomnoncalgoodguess,RMSEhomnoncal,RMSEhomcal),
-      c(RMSEhetnoncalL2,RMSEhetnoncalbadguess,RMSEhetnoncalgoodguess,RMSEhetnoncal,RMSEhetcal),
-      c(RMSEseqhetnoncalL2,RMSEseqhetnoncalbadguess,RMSEseqhetnoncalgoodguess,RMSEseqhetnoncal,RMSEseqhetcal))
+rbind(c(RMSEhomnoncalL2,RMSEhomnoncalguess,RMSEhomnoncal,RMSEhomcal),
+      c(RMSEhetnoncalL2,RMSEhetnoncalguess,RMSEhetnoncal,RMSEhetcal),
+      c(RMSEseqhetnoncalL2,RMSEseqhetnoncalguess,RMSEseqhetnoncal,RMSEseqhetcal))
 ```
 
 
 
 ```{r Scores}
 ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.sim)
-Scorehomnoncalbadguess = scoreEstDens(ZpredhomGPnoncalbadguess,Ztest.sim)
-Scorehomnoncalgoodguess = scoreEstDens(ZpredhomGPnoncalgoodguess,Ztest.sim)
+Scorehomnoncalguess = scoreEstDens(ZpredhomGPnoncalguess,Ztest.sim)
 ScorehetnoncalL2 = scoreEstDens(ZpredhetGPnoncalL2,Ztest.sim)
-Scorehetnoncalbadguess = scoreEstDens(ZpredhetGPnoncalbadguess,Ztest.sim)
-Scorehetnoncalgoodguess = scoreEstDens(ZpredhetGPnoncalgoodguess,Ztest.sim)
+Scorehetnoncalguess = scoreEstDens(ZpredhetGPnoncalguess,Ztest.sim)
 ScoreseqhetnoncalL2 = scoreEstDens(ZpredseqhetGPnoncalL2,Ztest.sim)
-Scoreseqhetnoncalbadguess = scoreEstDens(ZpredseqhetGPnoncalbadguess,Ztest.sim)
-Scoreseqhetnoncalgoodguess = scoreEstDens(ZpredseqhetGPnoncalgoodguess,Ztest.sim)
+Scoreseqhetnoncalguess = scoreEstDens(ZpredseqhetGPnoncalguess,Ztest.sim)
 ```
 
 
 1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP
-1st column for L2 estimate, 2nd column for bad guess, 3rd column for good guess, 4th for unif prior, 5th post calibration
+1st column for L2 estimate, 2nd column for guess, 3rd column for unif prior, 4th post calibration
 ```{r displayfullScores}
-rbind(c(ScorehomnoncalL2,Scorehomnoncalbadguess,Scorehomnoncalgoodguess,Scorehomnoncal,Scorehomcal),
-      c(ScorehetnoncalL2,Scorehetnoncalbadguess,Scorehetnoncalgoodguess,Scorehetnoncal,Scorehetcal),
-      c(ScoreseqhetnoncalL2,Scoreseqhetnoncalbadguess,Scoreseqhetnoncalgoodguess,Scoreseqhetnoncal,Scoreseqhetcal))
+rbind(c(ScorehomnoncalL2,Scorehomnoncalguess,Scorehomnoncal,Scorehomcal),
+      c(ScorehetnoncalL2,Scorehetnoncalguess,Scorehetnoncal,Scorehetcal),
+      c(ScoreseqhetnoncalL2,Scoreseqhetnoncalguess,Scoreseqhetnoncal,Scoreseqhetcal))
 ```
-
-<!--
-```{r var of predictions}
-VarPredhomnoncal = mean(apply(ZpredhomGPnoncal,1,var))
-VarPredhomcal = mean(apply(ZpredhomGPcal,1,var))
-VarPredhetnoncal = mean(apply(ZpredhetGPnoncal,1,var))
-VarPredhetcal = mean(apply(ZpredhetGPcal,1,var))
-VarPredseqhetnoncal = mean(apply(ZpredseqhetGPnoncal,1,var))
-VarPredseqhetcal = mean(apply(ZpredseqhetGPcal,1,var))
-VarPredhomnoncalL2 = mean(apply(ZpredhomGPnoncalL2,1,var))
-VarPredhomnoncalgoodguess = mean(apply(ZpredhomGPnoncalgoodguess,1,var))
-VarPredhomnoncalbadguess = mean(apply(ZpredhomGPnoncalbadguess,1,var))
-VarPredhetnoncalL2 = mean(apply(ZpredhetGPnoncalL2,1,var))
-VarPredhetnoncalgoodguess = mean(apply(ZpredhetGPnoncalgoodguess,1,var))
-VarPredhetnoncalbadguess = mean(apply(ZpredhetGPnoncalbadguess,1,var))
-VarPredseqhetnoncalL2 = mean(apply(ZpredseqhetGPnoncalL2,1,var))
-VarPredseqhetnoncalgoodguess = mean(apply(ZpredseqhetGPnoncalgoodguess,1,var))
-VarPredseqhetnoncalbadguess = mean(apply(ZpredseqhetGPnoncalbadguess,1,var))
-```
-
-
-1st row for homGP, 2nd row for hetGP, 3rd row for seqhetGP
-1st column for L2 estimate, 2nd column for bad guess, 3rd column for good guess, 4th for unif prior, 5th post calibration
-```{r display var}
-rbind(c(VarPredhomnoncalL2,VarPredhomnoncalbadguess,VarPredhomnoncalgoodguess,VarPredhomnoncal,VarPredhomcal),
-      c(VarPredhetnoncalL2,VarPredhetnoncalbadguess,VarPredhetnoncalgoodguess,VarPredhetnoncal,VarPredhetcal),
-      c(VarPredseqhetnoncalL2,VarPredseqhetnoncalbadguess,VarPredseqhetnoncalgoodguess,VarPredseqhetnoncal,VarPredseqhetcal))
-```
-
--->
-
-
-
-
