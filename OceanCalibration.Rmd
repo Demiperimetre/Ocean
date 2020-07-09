@@ -335,7 +335,7 @@ SumOfSquares((c(700,200)-100)/900,seqhet,Xfield[,1:2],YfieldnoiseN)
 We propose a guess. 
 
 ```{r goodbadguesses}
-guess = (c(600, 300) -100)/900 
+guess = (c(600, 400) -100)/900 
 ```
 
 
