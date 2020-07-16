@@ -20,8 +20,9 @@ knitr::opts_chunk$set(
   - **SimulatorAndFunctions.R** source this file for loading settings for running the simulator in 2D and 4D (i.e. with or without the calibration parameters).
   - **testdesign.R** generates test data to check the accuracy of the emulator and of calibration.
   - **LHDcalibration.R** function for generating design of numerical experiments for simulator with input variables restricted to be in the set of field input variables.
-  - **DOEcalibration** for generating the "field data" used in calibration and the design of numerical experiments.
+  - **DOEcalibration.R** for generating the "field data" used in calibration and the design of numerical experiments.
   - **FunctionCalibration.R** specific functions used in the calibration of the ocean simulator.
+  - **OceanEmulationSDplots.R** for generating several predictive SD plots from different DOE. 
   
   
 ## List of data
@@ -33,7 +34,8 @@ knitr::opts_chunk$set(
   - **staticDOEcalibration.csv** is the static design of numerical experiments used for homGP and hetGP for calibration purpose (4 inputs are considered longitude, latitude and the two calibrations paremeters). This design is obtained as 500 unique locations with 10 replications each.
   - **seqDOEcalibration.csv** is the seq design of numerical experiments used for seqhetGP for calibration purpose. It has the same unique location as the static design with only 4 replications first, the remaining runs (up to a total of 5000 runs to the simulators) are chosen sequentially.
   - **EmulatorCalib4D.Rdata**  contains the fit fo the emulators for calibration.
-  
+  - **discrepancy.csv** simulated discrepancy from a Gaussian Process. It is used to create synthetic data for calibration.
+  - **noisyfielddata.csv** synthetic field data for calibration (it corresponds to outputs of the ocean simulator + discrepancy + white noise).
   
   
   
