@@ -138,10 +138,22 @@ names(dfcalhom) = c("u1","u2","s2f","s2b")
 dfcalhom[,1:2] = dfcalhom[,1:2] * 900 +100
 dfcalhom[,3] = exp(dfcalhom[,3]) * Yv
 dfcalhom[,4] = exp(dfcalhom[,4]) * Yv
-hom1 = ggplot(dfcalhom,aes(x=u1,stat(density)))+ xlab(expression(K[x])) + geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
-hom2 = ggplot(dfcalhom,aes(x=u2,stat(density))) + xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
-hom3 = ggplot(dfcalhom,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2))  + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
+hom1 = ggplot(dfcalhom,aes(x=u1,stat(density)))+ xlab(expression(K[x])) + geom_density() + theme_bw() + xlim(50,1050) + ylim(0,2e-3) + geom_vline(aes(xintercept=700),color="red")+ scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+```
+
+    ## Scale for 'x' is already present. Adding another scale for 'x', which will
+    ## replace the existing scale.
+
+``` r
+hom2 = ggplot(dfcalhom,aes(x=u2,stat(density))) + xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1050) + ylim(0,1.2e-2) + geom_vline(aes(xintercept=200),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+```
+
+    ## Scale for 'x' is already present. Adding another scale for 'x', which will
+    ## replace the existing scale.
+
+``` r
+hom3 = ggplot(dfcalhom,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2))  + geom_density() + theme_bw() + xlim(0,7) + ylim(0,.6) + geom_vline(aes(xintercept=4),color="red")
+hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3)+ylim(0,.6)  +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 Calibration with hetGP
@@ -163,10 +175,22 @@ names(dfcalhet) = c("u1","u2","s2f","s2b")
 dfcalhet[,1:2] = dfcalhet[,1:2] * 900 +100
 dfcalhet[,3] = exp(dfcalhet[,3]) * Yv
 dfcalhet[,4] = exp(dfcalhet[,4]) * Yv
-het1 = ggplot(dfcalhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
-het2 = ggplot(dfcalhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
-het3 = ggplot(dfcalhet,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2)) + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
+het1 = ggplot(dfcalhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1050) + ylim(0,2e-3) + geom_vline(aes(xintercept=700),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+```
+
+    ## Scale for 'x' is already present. Adding another scale for 'x', which will
+    ## replace the existing scale.
+
+``` r
+het2 = ggplot(dfcalhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1050) + ylim(0,1.2e-2) + geom_vline(aes(xintercept=200),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+```
+
+    ## Scale for 'x' is already present. Adding another scale for 'x', which will
+    ## replace the existing scale.
+
+``` r
+het3 = ggplot(dfcalhet,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2)) + geom_density() + theme_bw() + xlim(0,7) +ylim(0,.6) + geom_vline(aes(xintercept=4),color="red")
+het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +ylim(0,.6) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 Calibration with seqhetGP
@@ -188,10 +212,22 @@ names(dfcalseqhet) = c("u1","u2","s2f","s2b")
 dfcalseqhet[,1:2] = dfcalseqhet[,1:2] * 900 +100
 dfcalseqhet[,3] = exp(dfcalseqhet[,3]) * Yv
 dfcalseqhet[,4] = exp(dfcalseqhet[,4]) * Yv
-seqhet1 = ggplot(dfcalseqhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
-seqhet2 = ggplot(dfcalseqhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
-seqhet3 = ggplot(dfcalseqhet,aes(x=s2f,stat(density))) + xlab(expression(sigma[epsilon]^2))+ geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
+seqhet1 = ggplot(dfcalseqhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1050)+ ylim(0,2e-3) + geom_vline(aes(xintercept=700),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+```
+
+    ## Scale for 'x' is already present. Adding another scale for 'x', which will
+    ## replace the existing scale.
+
+``` r
+seqhet2 = ggplot(dfcalseqhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1050)+ ylim(0,1.2e-2)  + geom_vline(aes(xintercept=200),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+```
+
+    ## Scale for 'x' is already present. Adding another scale for 'x', which will
+    ## replace the existing scale.
+
+``` r
+seqhet3 = ggplot(dfcalseqhet,aes(x=s2f,stat(density))) + xlab(expression(sigma[epsilon]^2))+ geom_density() + theme_bw() + xlim(0,7) + ylim(0,.6) + geom_vline(aes(xintercept=4),color="red")
+seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,3) +ylim(0,.6) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 ``` r
@@ -548,9 +584,9 @@ rbind(c(RMSEhomnoncalL2,RMSEhomnoncalguess,RMSEhomnoncal,RMSEhomcal),
 ```
 
     ##          [,1]     [,2]     [,3]     [,4]
-    ## [1,] 9.160076 9.156535 9.221905 9.142948
-    ## [2,] 9.162898 9.158955 9.202503 9.152914
-    ## [3,] 9.153980 9.151235 9.220196 9.157108
+    ## [1,] 9.163378 9.156696 9.177092 9.154842
+    ## [2,] 9.163770 9.154720 9.168190 9.157613
+    ## [3,] 9.155518 9.159968 9.196324 9.143700
 
 ``` r
 ScorehomnoncalL2 = scoreEstDens(ZpredhomGPnoncalL2,Ztest.sim)
@@ -572,6 +608,6 @@ rbind(c(ScorehomnoncalL2,Scorehomnoncalguess,Scorehomnoncal,Scorehomcal),
 ```
 
     ##           [,1]      [,2]      [,3]      [,4]
-    ## [1,] -2.504760 -2.659344 -2.589153 -2.318591
-    ## [2,] -2.550965 -2.707471 -2.616221 -2.317339
-    ## [3,] -2.553901 -2.685036 -2.614987 -2.295303
+    ## [1,] -2.529445 -2.662632 -2.587706 -2.311792
+    ## [2,] -2.592130 -2.728044 -2.613539 -2.322778
+    ## [3,] -2.627373 -2.670469 -2.622790 -2.302823

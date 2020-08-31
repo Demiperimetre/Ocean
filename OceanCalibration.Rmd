@@ -144,10 +144,10 @@ names(dfcalhom) = c("u1","u2","s2f","s2b")
 dfcalhom[,1:2] = dfcalhom[,1:2] * 900 +100
 dfcalhom[,3] = exp(dfcalhom[,3]) * Yv
 dfcalhom[,4] = exp(dfcalhom[,4]) * Yv
-hom1 = ggplot(dfcalhom,aes(x=u1,stat(density)))+ xlab(expression(K[x])) + geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
-hom2 = ggplot(dfcalhom,aes(x=u2,stat(density))) + xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
-hom3 = ggplot(dfcalhom,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2))  + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
+hom1 = ggplot(dfcalhom,aes(x=u1,stat(density)))+ xlab(expression(K[x])) + geom_density() + theme_bw() + xlim(50,1050) + ylim(0,2e-3) + geom_vline(aes(xintercept=700),color="red")+ scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+hom2 = ggplot(dfcalhom,aes(x=u2,stat(density))) + xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1050) + ylim(0,1.2e-2) + geom_vline(aes(xintercept=200),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+hom3 = ggplot(dfcalhom,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2))  + geom_density() + theme_bw() + xlim(0,7) + ylim(0,.6) + geom_vline(aes(xintercept=4),color="red")
+hom4 = ggplot(dfcalhom,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3)+ylim(0,.6)  +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 
@@ -170,10 +170,10 @@ names(dfcalhet) = c("u1","u2","s2f","s2b")
 dfcalhet[,1:2] = dfcalhet[,1:2] * 900 +100
 dfcalhet[,3] = exp(dfcalhet[,3]) * Yv
 dfcalhet[,4] = exp(dfcalhet[,4]) * Yv
-het1 = ggplot(dfcalhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
-het2 = ggplot(dfcalhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
-het3 = ggplot(dfcalhet,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2)) + geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
+het1 = ggplot(dfcalhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1050) + ylim(0,2e-3) + geom_vline(aes(xintercept=700),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+het2 = ggplot(dfcalhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1050) + ylim(0,1.2e-2) + geom_vline(aes(xintercept=200),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+het3 = ggplot(dfcalhet,aes(x=s2f,stat(density)))+ xlab(expression(sigma[epsilon]^2)) + geom_density() + theme_bw() + xlim(0,7) +ylim(0,.6) + geom_vline(aes(xintercept=4),color="red")
+het4 = ggplot(dfcalhet,aes(x=s2b,stat(density))) + xlab(expression(sigma[MD]^2)) + geom_density() + theme_bw() + xlim(0,3) +ylim(0,.6) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 
@@ -196,10 +196,10 @@ names(dfcalseqhet) = c("u1","u2","s2f","s2b")
 dfcalseqhet[,1:2] = dfcalseqhet[,1:2] * 900 +100
 dfcalseqhet[,3] = exp(dfcalseqhet[,3]) * Yv
 dfcalseqhet[,4] = exp(dfcalseqhet[,4]) * Yv
-seqhet1 = ggplot(dfcalseqhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1000) + geom_vline(aes(xintercept=700),color="red")
-seqhet2 = ggplot(dfcalseqhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1000)  + geom_vline(aes(xintercept=200),color="red")
-seqhet3 = ggplot(dfcalseqhet,aes(x=s2f,stat(density))) + xlab(expression(sigma[epsilon]^2))+ geom_density() + theme_bw() + xlim(0,7) + geom_vline(aes(xintercept=4),color="red")
-seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,3) +geom_vline(aes(xintercept=Yv*.02),color="red")
+seqhet1 = ggplot(dfcalseqhet,aes(x=u1,stat(density))) + xlab(expression(K[x]))+ geom_density() + theme_bw() + xlim(50,1050)+ ylim(0,2e-3) + geom_vline(aes(xintercept=700),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+seqhet2 = ggplot(dfcalseqhet,aes(x=u2,stat(density)))+ xlab(expression(K[y])) + geom_density() + theme_bw() +xlim(50,1050)+ ylim(0,1.2e-2)  + geom_vline(aes(xintercept=200),color="red")+scale_x_continuous(breaks=c(100,500,1000),limits = c(50,1050))
+seqhet3 = ggplot(dfcalseqhet,aes(x=s2f,stat(density))) + xlab(expression(sigma[epsilon]^2))+ geom_density() + theme_bw() + xlim(0,7) + ylim(0,.6) + geom_vline(aes(xintercept=4),color="red")
+seqhet4 = ggplot(dfcalseqhet,aes(x=s2b,stat(density)))+ xlab(expression(sigma[MD]^2))  + geom_density() + theme_bw() + xlim(0,3) +ylim(0,.6) +geom_vline(aes(xintercept=Yv*.02),color="red")
 ```
 
 
