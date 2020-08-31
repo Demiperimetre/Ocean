@@ -13,10 +13,12 @@ Ocean Example for Stochastic Simulators: overview with opportunities
   - **LHDcalibration.R** function for generating design of numerical
     experiments for simulator with input variables restricted to be in
     the set of field input variables.
-  - **DOEcalibration** for generating the “field data” used in
+  - **DOEcalibration.R** for generating the “field data” used in
     calibration and the design of numerical experiments.
   - **FunctionCalibration.R** specific functions used in the calibration
     of the ocean simulator.
+  - **OceanEmulationSDplots.R** for generating several predictive SD
+    plots from different DOE.
 
 ## List of data
 
@@ -49,6 +51,11 @@ Ocean Example for Stochastic Simulators: overview with opportunities
     chosen sequentially.
   - **EmulatorCalib4D.Rdata** contains the fit fo the emulators for
     calibration.
+  - **discrepancy.csv** simulated discrepancy from a Gaussian Process.
+    It is used to create synthetic data for calibration.
+  - **noisyfielddata.csv** synthetic field data for calibration (it
+    corresponds to outputs of the ocean simulator + discrepancy + white
+    noise).
 
 ## List of results visualization
 
